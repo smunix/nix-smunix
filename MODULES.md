@@ -19,11 +19,14 @@ This document summarizes the reusable modules and composition helpers in this co
 | Module | Option | Responsibility |
 |---|---|---|
 | Plasma | `modules.desktop.plasma.enable` | Enables Plasma 6 and SDDM, preserving a standard graphical login and desktop session. |
-| Niri and Noctalia | `modules.desktop.niri.enable` | Adds an SDDM-selectable Niri session with Noctalia’s bar, launcher, clipboard, notifications, lock screen, OSD, control center, session menu, wallpaper, weather, media, and desktop widgets. It also owns the stable compositor, Xwayland Satellite, portals, keyring, Wayland helpers, fonts, icons, cursor, and managed KDL/TOML configuration. |
+| Niri and Noctalia | `modules.desktop.niri.enable` | Adds an SDDM-selectable Niri session with Noctalia’s desktop shell, six persistent named workspaces, application-to-workspace rules, and maximized opening for normal application windows. It also owns the stable compositor, Xwayland Satellite, portals, keyring, desktop helpers, fonts, icons, cursor, and managed KDL/TOML configuration. |
 | Terminal selector | `modules.desktop.terminal.default` | Selects Ghostty or WezTerm and exports `TERMINAL` through system and Home Manager session environments. |
 | Ghostty | `modules.desktop.terminal.ghostty.enable` | Installs Ghostty with the reference-style Maple Mono font, translucent dark palette, and Nushell startup command. |
 | WezTerm | `modules.desktop.terminal.wezterm.enable` | Installs WezTerm independently as an alternative and starts Nushell by default. |
 | Brave | `modules.desktop.browsers.brave.enable` | Enables Brave through Home Manager’s Chromium-compatible browser support. |
+| Discord | `modules.desktop.chats.discord.enable` | Installs the Discord desktop chat client through the integrated Home Manager profile. |
+| Signal | `modules.desktop.chats.signal.enable` | Installs Signal Desktop through the integrated Home Manager profile. |
+| Compact fonts | `modules.desktop.fonts.compact.enable` | Applies the 15% smaller GTK, KDE, and X11 font baselines consumed by the desktop and application modules. |
 | Editor selector | `modules.desktop.editors.default` | Sets `EDITOR` and `VISUAL` to the selected editor in both system and Home Manager session environments. |
 | Helix | `modules.desktop.editors.helix.enable` | Installs and configures Helix, including relative line numbers and automatic formatting. |
 | Vim | `modules.desktop.editors.vim.enable` | Installs Vim through Home Manager. |
@@ -69,4 +72,4 @@ This document summarizes the reusable modules and composition helpers in this co
 
 ## Feature selection
 
-The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Git, Jujutsu, Helix, Vim, Zed, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
+The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.

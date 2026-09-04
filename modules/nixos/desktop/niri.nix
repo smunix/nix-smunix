@@ -69,6 +69,8 @@ in {
       cliphist
       grim
       hyprpicker
+      kdePackages.dolphin
+      kdePackages.okular
       libnotify
       networkmanagerapplet
       pavucontrol
@@ -79,6 +81,7 @@ in {
       wf-recorder
       wireplumber
       wl-clipboard
+      xterm
       niriPackages.xwayland-satellite-stable
     ];
 
@@ -138,8 +141,8 @@ in {
           style=Fusion
 
           [Fonts]
-          fixed="Maple Mono NF CN,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
-          general="Maple Mono NF CN,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+          fixed="Maple Mono NF CN,8.5,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+          general="Maple Mono NF CN,8.5,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
 
           [Interface]
           activate_item_on_single_click=1

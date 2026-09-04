@@ -55,6 +55,11 @@ modules = {
       wezterm.enable = true;
     };
     browsers.brave.enable = true;
+    chats = {
+      discord.enable = true;
+      signal.enable = true;
+    };
+    fonts.compact.enable = true;
     editors = {
       default = "helix";
       helix.enable = true;
@@ -84,7 +89,22 @@ Both Plasma and Niri are enabled as independent sessions in SDDM. At the login s
 
 The Niri session uses Noctalia as its complete desktop shell. Noctalia owns the rounded top bar, application launcher, clipboard history, notifications, lock screen, OSD, control center, session menu, wallpaper, weather, media controls, and desktop clock/weather/media widgets. The visual profile uses wallpaper-derived dark colors, Maple Mono NF CN, Papirus icons, a Bibata cursor, and the included café wallpaper. Ghostty is styled with a translucent dark palette and starts Nushell with Starship.
 
-Use `Super+Return` for Ghostty, `Super+D` or `Super+Space` for the launcher, `Super+S` for Control Center, `Super+E` for the session menu, `Super+Shift+V` for clipboard history, `Super+Shift+W` for wallpapers, `Super+Shift+,` for settings, `Super+Shift+D` for desktop-widget editing, `Ctrl+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
+Normal application windows open maximized to Niri’s usable workspace area. Noctalia’s own settings window is exempt and remains floating. The persistent named workspaces route applications as follows:
+
+| Shortcut | Workspace | Applications |
+|---|---|---|
+| `Super+1` | `shell` | WezTerm, Ghostty, XTerm |
+| `Super+2` | `internet` | Firefox, Brave |
+| `Super+3` | `viewers` | Okular, Evince, Xpdf |
+| `Super+4` | `programming` | Zed (`zeditor`) |
+| `Super+5` | `explorers` | Dolphin |
+| `Super+6` | `chats` | Discord, Signal Desktop |
+
+The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular and Evince remain installed as the default PDF viewers.
+
+Use `Super+Ctrl+1` through `Super+Ctrl+6` to move the focused column to the corresponding named workspace. Other desktop controls include `Super+Return` for Ghostty, `Super+D` or `Super+Space` for the launcher, `Super+S` for Control Center, `Super+E` for the session menu, `Super+Shift+V` for clipboard history, `Super+Shift+W` for wallpapers, `Super+Shift+,` for settings, `Super+Shift+D` for desktop-widget editing, `Ctrl+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
+
+The compact-font feature reduces the configured Noctalia, GTK, Qt, KDE, X11, Ghostty, WezTerm, and Zed font baselines by 15%. Application-specific document or web-page zoom remains controlled by the application.
 
 ## Common commands
 

@@ -48,6 +48,11 @@
         wezterm.enable = true;
       };
       browsers.brave.enable = true;
+      chats = {
+        discord.enable = true;
+        signal.enable = true;
+      };
+      fonts.compact.enable = true;
       editors = {
         default = "helix";
         helix.enable = true;

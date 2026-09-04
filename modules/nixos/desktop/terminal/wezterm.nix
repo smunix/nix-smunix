@@ -13,10 +13,13 @@ in {
   config = lib.mkIf enabled {
     hm.programs.wezterm = {
       enable = true;
-      settings.default_prog = [
-        "${pkgs.nushell}/bin/nu"
-        "--login"
-      ];
+      settings = {
+        font_size = 11.05;
+        default_prog = [
+          "${pkgs.nushell}/bin/nu"
+          "--login"
+        ];
+      };
     };
   };
 }

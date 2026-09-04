@@ -15,6 +15,8 @@ in {
       userSettings = {
         base_keymap = "VSCode";
         vim_mode = true;
+        ui_font_size = 13.6;
+        buffer_font_size = 13.6;
       };
     };
   };

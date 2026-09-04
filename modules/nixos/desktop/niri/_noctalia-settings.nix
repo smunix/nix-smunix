@@ -3,6 +3,8 @@
   wallpaper,
   wallpaperDirectory,
 }: {
+  accessibility.ui_scale = 0.85;
+
   theme = {
     mode = "dark";
     shell_mode = "dark";
@@ -98,7 +100,7 @@
       padding = 2;
       widget_spacing = 6;
       scale = 1.0;
-      font_scale = 1.0;
+      font_scale = 0.85;
       font_weight = 600;
       font_family = "Maple Mono NF CN";
       capsule = true;
@@ -228,8 +230,8 @@
       style = "regular";
       show_labels = true;
       show_icons = false;
-      label_source = "id";
-      max_label_chars = 2;
+      label_source = "name";
+      max_label_chars = 12;
       labels_only_when_occupied = false;
       hide_when_empty = false;
       pill_scale = 0.85;

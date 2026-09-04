@@ -18,7 +18,7 @@ in {
       settings = {
         theme = "smunix-noctalia";
         font-family = "Maple Mono NF CN";
-        font-size = 13;
+        font-size = 11.05;
         window-decoration = false;
         background-opacity = 0.93;
         scrollback-limit = 20000;
