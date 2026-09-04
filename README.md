@@ -68,6 +68,12 @@ hm.modules = {
 
 A new NixOS module can be added anywhere below `modules/nixos/` as a `.nix` file. It is imported recursively without requiring a central registration list. Home Manager modules follow the same convention below `modules/home-manager/`. Files and directories whose names begin with an underscore are ignored by discovery and can be used for private implementation helpers.
 
+## Desktop sessions
+
+Both Plasma and Niri are enabled as independent sessions in SDDM. At the login screen, use the session selector to choose **Plasma (Wayland)** or **Niri**, then sign in normally. SDDM remembers the most recently selected session.
+
+The Niri session starts Waybar, Mako, and a solid-color background. Use `Super+Return` for WezTerm, `Super+D` for Fuzzel, `Super+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
+
 ## Common commands
 
 Format and validate the flake before rebuilding:
