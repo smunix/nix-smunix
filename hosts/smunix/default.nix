@@ -28,6 +28,7 @@
     };
 
     shell.default = "nushell";
+    security.passwordlessSudo.enable = true;
 
     vcs = {
       git.enable = true;
