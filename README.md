@@ -86,3 +86,7 @@ sudo nixos-rebuild switch --flake .#smunix
 ```
 
 The host’s filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix`. Keep those values aligned with the machine’s generated hardware configuration.
+
+## Passwordless sudo
+
+The `smunix` host enables `modules.security.passwordlessSudo`. This feature adds a `NOPASSWD` sudo rule only for the configured primary user, `smunix`; it does not relax the password requirement for every member of the `wheel` group. Since unrestricted passwordless sudo grants full administrator access, enable it only on a machine where that access model is intentional.
