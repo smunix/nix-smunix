@@ -37,6 +37,7 @@ modules = {
 
   shell = {
     default = "nushell";
+    starship.enable = true;
     zellij.enable = true;
   };
 
@@ -47,7 +48,12 @@ modules = {
 
   desktop = {
     plasma.enable = true;
-    terminal.default = "wezterm";
+    niri.enable = true;
+    terminal = {
+      default = "ghostty";
+      ghostty.enable = true;
+      wezterm.enable = true;
+    };
     browsers.brave.enable = true;
     editors = {
       default = "helix";
@@ -59,7 +65,7 @@ modules = {
 };
 ```
 
-Nushell and WezTerm have separate selectors because Nushell is the user’s login shell while WezTerm is the graphical terminal emulator. When both are selected, WezTerm explicitly starts a Nushell login process. The selected editor is exported as `EDITOR` and `VISUAL` through both the system and Home Manager session environments. Zellij is available as a tmux alternative and is configured to open Nushell panes and use Helix for scrollback editing. Git and Jujutsu are grouped under `modules.vcs`.
+Nushell and the terminal selector remain separate because Nushell is the user’s login shell while Ghostty and WezTerm are graphical terminal emulators. Ghostty is the selected default and both terminals explicitly start Nushell; WezTerm remains installed as an alternative. Starship supplies the Nushell prompt. The selected editor is exported as `EDITOR` and `VISUAL` through both the system and Home Manager session environments. Zellij remains available as a tmux alternative and opens Nushell panes with Helix as its scrollback editor. Git and Jujutsu are grouped under `modules.vcs`.
 
 Home Manager’s official flake-parts module provides the canonical `homeModules` and `homeConfigurations` output interfaces. The repository also preserves `homeManagerModules` as a compatibility alias. At runtime, Home Manager remains integrated into the NixOS module graph; the shared `hm` alias points to `home-manager.users.<primary-user>`, while generic Home Manager features retain their own `modules` namespace:
 
@@ -76,7 +82,9 @@ A new NixOS module can be added anywhere below `modules/nixos/` as a `.nix` file
 
 Both Plasma and Niri are enabled as independent sessions in SDDM. At the login screen, use the session selector to choose **Plasma (Wayland)** or **Niri**, then sign in normally. SDDM remembers the most recently selected session.
 
-The Niri session starts Waybar, Mako, and a solid-color background. Use `Super+Return` for WezTerm, `Super+D` for Fuzzel, `Super+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
+The Niri session uses Noctalia as its complete desktop shell. Noctalia owns the rounded top bar, application launcher, clipboard history, notifications, lock screen, OSD, control center, session menu, wallpaper, weather, media controls, and desktop clock/weather/media widgets. The visual profile uses wallpaper-derived dark colors, Maple Mono NF CN, Papirus icons, a Bibata cursor, and the included café wallpaper. Ghostty is styled with a translucent dark palette and starts Nushell with Starship.
+
+Use `Super+Return` for Ghostty, `Super+D` or `Super+Space` for the launcher, `Super+S` for Control Center, `Super+E` for the session menu, `Super+Shift+V` for clipboard history, `Super+Shift+W` for wallpapers, `Super+Shift+,` for settings, `Super+Shift+D` for desktop-widget editing, `Ctrl+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
 
 ## Common commands
 

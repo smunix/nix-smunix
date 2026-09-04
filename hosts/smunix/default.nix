@@ -29,6 +29,7 @@
 
     shell = {
       default = "nushell";
+      starship.enable = true;
       zellij.enable = true;
     };
     security.passwordlessSudo.enable = true;
@@ -41,7 +42,11 @@
     desktop = {
       plasma.enable = true;
       niri.enable = true;
-      terminal.default = "wezterm";
+      terminal = {
+        default = "ghostty";
+        ghostty.enable = true;
+        wezterm.enable = true;
+      };
       browsers.brave.enable = true;
       editors = {
         default = "helix";
@@ -51,10 +56,7 @@
       };
     };
 
-    programs = {
-      firefox.enable = true;
-      waybar.enable = true;
-    };
+    programs.firefox.enable = true;
   };
 
   hm.modules = {

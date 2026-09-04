@@ -5,25 +5,18 @@
   ...
 }: let
   cfg = config.modules.desktop.terminal;
+  enabled = cfg.wezterm.enable || cfg.default == "wezterm";
 in {
-  options.modules.desktop.terminal.default = lib.mkOption {
-    type = lib.types.nullOr (lib.types.enum ["wezterm"]);
-    default = null;
-    description = "Default terminal emulator for the desktop session.";
-  };
+  options.modules.desktop.terminal.wezterm.enable =
+    lib.mkEnableOption "WezTerm terminal emulator";
 
-  config = lib.mkIf (cfg.default == "wezterm") {
-    environment.variables.TERMINAL = "wezterm";
-
-    hm = {
-      home.sessionVariables.TERMINAL = "wezterm";
-      programs.wezterm = {
-        enable = true;
-        settings.default_prog = [
-          "${pkgs.nushell}/bin/nu"
-          "--login"
-        ];
-      };
+  config = lib.mkIf enabled {
+    hm.programs.wezterm = {
+      enable = true;
+      settings.default_prog = [
+        "${pkgs.nushell}/bin/nu"
+        "--login"
+      ];
     };
   };
 }

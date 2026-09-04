@@ -19,8 +19,10 @@ This document summarizes the reusable modules and composition helpers in this co
 | Module | Option | Responsibility |
 |---|---|---|
 | Plasma | `modules.desktop.plasma.enable` | Enables Plasma 6 and SDDM, preserving a standard graphical login and desktop session. |
-| Niri | `modules.desktop.niri.enable` | Adds an SDDM-selectable Niri session, stable compositor and Xwayland Satellite packages, Wayland portals, keyring, a Niri-scoped PolicyKit agent, Waybar, Mako, Fuzzel, Swaylock, and a managed `config.kdl`. |
-| WezTerm terminal selector | `modules.desktop.terminal.default = "wezterm"` | Installs and configures WezTerm as a selectable terminal emulator. |
+| Niri and Noctalia | `modules.desktop.niri.enable` | Adds an SDDM-selectable Niri session with Noctalia’s bar, launcher, clipboard, notifications, lock screen, OSD, control center, session menu, wallpaper, weather, media, and desktop widgets. It also owns the stable compositor, Xwayland Satellite, portals, keyring, Wayland helpers, fonts, icons, cursor, and managed KDL/TOML configuration. |
+| Terminal selector | `modules.desktop.terminal.default` | Selects Ghostty or WezTerm and exports `TERMINAL` through system and Home Manager session environments. |
+| Ghostty | `modules.desktop.terminal.ghostty.enable` | Installs Ghostty with the reference-style Maple Mono font, translucent dark palette, and Nushell startup command. |
+| WezTerm | `modules.desktop.terminal.wezterm.enable` | Installs WezTerm independently as an alternative and starts Nushell by default. |
 | Brave | `modules.desktop.browsers.brave.enable` | Enables Brave through Home Manager’s Chromium-compatible browser support. |
 | Editor selector | `modules.desktop.editors.default` | Sets `EDITOR` and `VISUAL` to the selected editor in both system and Home Manager session environments. |
 | Helix | `modules.desktop.editors.helix.enable` | Installs and configures Helix, including relative line numbers and automatic formatting. |
@@ -38,6 +40,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Haskell | `modules.develop.haskell.enable` | Provides GHC, Cabal, Haskell Language Server, and HLint. |
 | Python | `modules.develop.python.enable` | Provides Python 3, uv, Ruff, and Pyright. |
 | Nushell selector | `modules.shell.default = "nushell"` | Adds Nushell as the primary user’s valid login shell and exports it through system, Home Manager session, and Nushell environments. |
+| Starship | `modules.shell.starship.enable` | Enables the Starship prompt for Nushell and Bash, including OS and Kubernetes context indicators. |
 | Zellij | `modules.shell.zellij.enable` | Installs and configures Zellij as a tmux alternative, with Nushell as its pane shell and Helix as its scrollback editor. |
 | Git | `modules.vcs.git.enable` | Installs Git Full and declares reusable Git aliases and settings. |
 | Jujutsu | `modules.vcs.jujutsu.enable` | Installs Jujutsu and generates its managed author identity from `user.description` and `user.email`; assertions prevent an empty identity. |
@@ -66,4 +69,4 @@ This document summarizes the reusable modules and composition helpers in this co
 
 ## Feature selection
 
-The `smunix` manifest enables Plasma and Niri, NetworkManager, PipeWire, printing, the language toolchains, Nushell, Zellij, WezTerm, Brave, Firefox, Git, Jujutsu, Helix, Vim, Zed, Waybar, passwordless sudo for the primary user, and the shared Home Manager base/package profiles.
+The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Git, Jujutsu, Helix, Vim, Zed, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.

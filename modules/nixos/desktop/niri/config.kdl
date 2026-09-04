@@ -1,8 +1,18 @@
-// Niri configuration for the smunix desktop session.
+// Niri configuration for the smunix Noctalia desktop session.
 
-spawn-at-startup "waybar"
-spawn-at-startup "mako"
-spawn-at-startup "swaybg" "-c" "#1e1e2e"
+spawn-at-startup "noctalia"
+
+environment {
+    XDG_CURRENT_DESKTOP "niri"
+    XDG_SESSION_DESKTOP "niri"
+    NIXOS_OZONE_WL "1"
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+    QT_QPA_PLATFORM "wayland;xcb"
+    QT_QPA_PLATFORMTHEME "qt6ct"
+    SDL_VIDEODRIVER "wayland"
+    GDK_BACKEND "wayland"
+    TERMINAL "ghostty"
+}
 
 input {
     keyboard {
@@ -20,7 +30,7 @@ input {
 
 layout {
     gaps 8
-    center-focused-column "on-overflow"
+    center-focused-column "never"
 
     preset-column-widths {
         proportion 0.333333
@@ -31,14 +41,35 @@ layout {
     default-column-width { proportion 0.5; }
 
     focus-ring {
-        width 3
-        active-color "#89b4fa"
-        inactive-color "#45475a"
+        width 4
+        active-color "#7fc8ff"
+        inactive-color "#505050"
     }
 
     border {
         off
     }
+}
+
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
+
+debug {
+    honor-xdg-activation-with-invalid-serial
 }
 
 prefer-no-csd
@@ -51,23 +82,35 @@ hotkey-overlay {
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    Mod+Return { spawn "wezterm"; }
-    Mod+D { spawn "fuzzel"; }
-    Super+Alt+L { spawn "swaylock" "-f" "-c" "1e1e2e"; }
+    // Applications and Noctalia surfaces.
+    Mod+Return { spawn "ghostty"; }
+    Mod+D { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+Space { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    XF86Search { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+Shift+V { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+C { spawn "noctalia" "msg" "panel-toggle" "launcher" "/calc"; }
+    Mod+S { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+E { spawn "noctalia" "msg" "panel-toggle" "session"; }
+    Mod+Shift+W { spawn "noctalia" "msg" "panel-toggle" "wallpaper"; }
+    Mod+Shift+Comma { spawn "noctalia" "msg" "settings-toggle"; }
+    Mod+Shift+D { spawn "noctalia" "msg" "desktop-widgets-toggle-edit"; }
+    Alt+Tab { spawn "noctalia" "msg" "window-switcher"; }
+    Ctrl+Alt+L { spawn "noctalia" "msg" "session" "lock"; }
+    Super+Alt+L { spawn "noctalia" "msg" "session" "lock"; }
 
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05+" "--limit" "1.0"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05-"; }
-    XF86AudioMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-    XF86AudioMicMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+    // Noctalia OSD and hardware controls.
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-down"; }
+    XF86AudioMute allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "noctalia" "msg" "mic-mute"; }
+    XF86AudioPlay allow-when-locked=true { spawn "noctalia" "msg" "media" "toggle"; }
+    XF86AudioStop allow-when-locked=true { spawn "noctalia" "msg" "media" "stop"; }
+    XF86AudioPrev allow-when-locked=true { spawn "noctalia" "msg" "media" "previous"; }
+    XF86AudioNext allow-when-locked=true { spawn "noctalia" "msg" "media" "next"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
 
-    XF86AudioPlay allow-when-locked=true { spawn "playerctl" "play-pause"; }
-    XF86AudioStop allow-when-locked=true { spawn "playerctl" "stop"; }
-    XF86AudioPrev allow-when-locked=true { spawn "playerctl" "previous"; }
-    XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }
-
-    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "set" "5%+"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
-
+    // Window and column navigation.
     Mod+Left { focus-column-left; }
     Mod+Down { focus-window-down; }
     Mod+Up { focus-window-up; }
@@ -104,6 +147,7 @@ binds {
     Mod+Ctrl+Shift+K { move-column-to-monitor-up; }
     Mod+Ctrl+Shift+L { move-column-to-monitor-right; }
 
+    // Workspaces.
     Mod+Page_Down { focus-workspace-down; }
     Mod+Page_Up { focus-workspace-up; }
     Mod+U { focus-workspace-down; }
@@ -141,29 +185,31 @@ binds {
     Mod+Ctrl+8 { move-column-to-workspace 8; }
     Mod+Ctrl+9 { move-column-to-workspace 9; }
 
+    // Layout controls.
     Mod+BracketLeft { consume-or-expel-window-left; }
     Mod+BracketRight { consume-or-expel-window-right; }
     Mod+Comma { consume-window-into-column; }
     Mod+Period { expel-window-from-column; }
-
     Mod+R { switch-preset-column-width; }
     Mod+Shift+R { switch-preset-window-height; }
     Mod+Ctrl+R { reset-window-height; }
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
     Mod+V { toggle-window-floating; }
-    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+    Mod+Ctrl+F { expand-column-to-available-width; }
+    Mod+Ctrl+C { center-visible-columns; }
     Mod+Minus { set-column-width "-10%"; }
     Mod+Equal { set-column-width "+10%"; }
     Mod+Shift+Minus { set-window-height "-10%"; }
     Mod+Shift+Equal { set-window-height "+10%"; }
 
-    Print { screenshot; }
-    Ctrl+Print { screenshot-screen; }
+    // Screenshots and session controls.
+    Print { spawn "noctalia" "msg" "screenshot-region"; }
+    Ctrl+Print { spawn "noctalia" "msg" "screenshot-fullscreen"; }
     Alt+Print { screenshot-window; }
-
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
     Mod+Q repeat=false { close-window; }
     Mod+Shift+P { power-off-monitors; }
     Mod+Shift+E { quit; }
-    Ctrl+Alt+Delete { quit; }
+    Ctrl+Alt+Delete { spawn "noctalia" "msg" "panel-toggle" "session"; }
 }

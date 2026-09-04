@@ -8,17 +8,36 @@
 }: let
   cfg = config.modules.desktop.niri;
   niriPackages = inputs.niri.packages.${system};
+  noctaliaPackage = inputs.noctalia.packages.${system}.default;
+  wallpaperDirectory = "${config.user.home}/Pictures/Wallpapers";
+  wallpaper = "${wallpaperDirectory}/anime-girls_tea.jpg";
+  noctaliaSettings = import ./niri/_noctalia-settings.nix {
+    homeDirectory = config.user.home;
+    inherit wallpaper wallpaperDirectory;
+  };
 in {
+  imports = [inputs.noctalia.nixosModules.default];
+
   options.modules.desktop.niri.enable =
-    lib.mkEnableOption "the Niri Wayland compositor";
+    lib.mkEnableOption "the Niri Wayland compositor with the Noctalia desktop shell";
 
   config = lib.mkIf cfg.enable {
-    programs.niri = {
-      enable = true;
-      package = niriPackages.niri-stable;
+    programs = {
+      niri = {
+        enable = true;
+        package = niriPackages.niri-stable;
+      };
+
+      noctalia = {
+        enable = true;
+        package = noctaliaPackage;
+        systemd.enable = false;
+        recommendedServices.enable = true;
+      };
+
+      dconf.enable = true;
     };
 
-    programs.dconf.enable = true;
     security.polkit.enable = true;
     security.pam.services.sddm.enableGnomeKeyring = true;
     services.gnome.gnome-keyring.enable = true;
@@ -29,86 +48,109 @@ in {
       extraPortals = [pkgs.xdg-desktop-portal-gtk];
     };
 
+    fonts = {
+      fontDir.enable = true;
+      packages = with pkgs; [
+        maple-mono.NF-CN-unhinted
+        noto-fonts
+        noto-fonts-color-emoji
+      ];
+      fontconfig.defaultFonts = {
+        monospace = ["Maple Mono NF CN"];
+        sansSerif = ["Noto Sans"];
+        serif = ["Noto Serif"];
+        emoji = ["Noto Color Emoji"];
+      };
+    };
+
     user.packages = with pkgs; [
+      app2unit
       brightnessctl
-      fuzzel
+      cliphist
       grim
+      hyprpicker
       libnotify
-      mako
+      networkmanagerapplet
+      pavucontrol
       playerctl
+      qt6Packages.qt6ct
       satty
       slurp
-      swaybg
-      swaylock
+      wf-recorder
       wireplumber
       wl-clipboard
       niriPackages.xwayland-satellite-stable
     ];
 
     hm = {
+      imports = [inputs.noctalia.homeModules.default];
+
+      home = {
+        file."Pictures/Wallpapers/anime-girls_tea.jpg".source =
+          ./niri/wallpapers/anime-girls_tea.jpg;
+
+        sessionVariables = {
+          NIXOS_OZONE_WL = "1";
+          MOZ_ENABLE_WAYLAND = "1";
+          MOZ_WEBRENDER = "1";
+          ELECTRON_OZONE_PLATFORM_HINT = "auto";
+          _JAVA_AWT_WM_NONREPARENTING = "1";
+          QT_QPA_PLATFORM = "wayland;xcb";
+          QT_QPA_PLATFORMTHEME = "qt6ct";
+          QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+          QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+          SDL_VIDEODRIVER = "wayland";
+          GDK_BACKEND = "wayland";
+        };
+
+        pointerCursor = {
+          name = "Bibata-Modern-Ice";
+          package = pkgs.bibata-cursors;
+          size = 24;
+          gtk.enable = true;
+          x11.enable = true;
+        };
+      };
+
+      gtk = {
+        enable = true;
+        iconTheme = {
+          name = "Papirus-Dark";
+          package = pkgs.papirus-icon-theme;
+        };
+      };
+
+      programs.noctalia = {
+        enable = true;
+        package = noctaliaPackage;
+        systemd.enable = false;
+        checkConfig = false;
+        settings = noctaliaSettings;
+      };
+
       xdg.configFile = {
         "niri/config.kdl".source = ./niri/config.kdl;
+        "qt6ct/qt6ct.conf".text = ''
+          [Appearance]
+          custom_palette=false
+          icon_theme=Papirus-Dark
+          standard_dialogs=default
+          style=Fusion
 
-        "mako/config".text = ''
-          font=Sans 11
-          background-color=#1e1e2eff
-          text-color=#cdd6f4ff
-          border-color=#89b4faff
-          border-size=2
-          border-radius=8
-          default-timeout=5000
-          anchor=top-right
+          [Fonts]
+          fixed="Maple Mono NF CN,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+          general="Maple Mono NF CN,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+
+          [Interface]
+          activate_item_on_single_click=1
+          buttonbox_layout=0
+          dialog_buttons_have_icons=1
+          keyboard_scheme=2
+          menus_have_icons=true
+          show_shortcuts_in_context_menus=true
+          toolbutton_style=4
+          wheel_scroll_lines=3
         '';
-      };
-
-      programs.waybar = {
-        enable = true;
-        systemd.enable = false;
-        settings.mainBar = {
-          layer = "top";
-          position = "top";
-          height = 30;
-          modules-left = ["niri/workspaces"];
-          modules-center = ["clock"];
-          modules-right = [
-            "pulseaudio"
-            "network"
-            "battery"
-            "tray"
-          ];
-
-          "niri/workspaces".format = "{icon}";
-          clock.format = "{:%a %Y-%m-%d %H:%M}";
-          pulseaudio = {
-            format = "{volume}% {icon}";
-            format-muted = "muted";
-            on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-          };
-          network = {
-            format-wifi = "{essid} {signalStrength}%";
-            format-ethernet = "ethernet";
-            format-disconnected = "offline";
-          };
-          battery = {
-            format = "{capacity}%";
-            format-charging = "{capacity}% charging";
-          };
-        };
-      };
-
-      systemd.user.services.niri-polkit-agent = {
-        Unit = {
-          Description = "PolicyKit authentication agent for Niri";
-          After = ["graphical-session.target"];
-          PartOf = ["graphical-session.target"];
-        };
-        Service = {
-          Type = "simple";
-          ExecStart = "${pkgs.kdePackages.polkit-kde-agent-1}/libexec/polkit-kde-authentication-agent-1";
-          Restart = "on-failure";
-          RestartSec = 1;
-        };
-        Install.WantedBy = ["niri.service"];
       };
     };
   };
