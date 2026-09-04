@@ -20,6 +20,12 @@ in {
       description = "Human-readable description for the primary user.";
     };
 
+    email = mkOption {
+      type = types.str;
+      default = "";
+      description = "Email address used by tools that create authored changes.";
+    };
+
     home = mkOption {
       type = types.str;
       default = "/home/${cfg.name}";

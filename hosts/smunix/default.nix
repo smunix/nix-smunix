@@ -4,6 +4,7 @@
   user = {
     name = "smunix";
     description = "Providence Salumu";
+    email = "Providence.Salumu@smunix.com";
     extraGroups = [
       "networkmanager"
       "wheel"
