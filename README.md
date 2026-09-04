@@ -1,12 +1,14 @@
 # nix-smunix
 
-This repository defines the `smunix` NixOS system and its Home Manager profile as a modular flake. Its structure follows the main architectural conventions of the [`01-dratrion-nix`](https://github.com/smunix/snowflake/tree/01-dratrion-nix) branch of Snowflake: hosts are discovered from the filesystem, shared modules are imported recursively, and each host is a concise feature manifest rather than a monolithic configuration file.
+This repository defines the `smunix` NixOS system and its Home Manager profile as a modular flake. It uses [flake-parts](https://flake.parts/) to compose system-independent outputs and per-system packages and tooling. Its structure follows the main architectural conventions of the [`01-dratrion-nix`](https://github.com/smunix/snowflake/tree/01-dratrion-nix) branch of Snowflake: hosts are discovered from the filesystem, shared modules are imported recursively, and each host is a concise feature manifest rather than a monolithic configuration file.
 
 ## Repository structure
 
 | Path | Purpose |
 |---|---|
-| `flake.nix` | Exposes hosts, modules, overlays, packages, and formatters. |
+| `flake.nix` | Declares inputs and delegates output composition to flake-parts. |
+| `parts/flake.nix` | Exposes hosts, overlays, reusable NixOS modules, and Home Manager modules. |
+| `parts/per-system.nix` | Defines packages and formatters for every supported system. |
 | `default.nix` | Applies configuration shared by every NixOS host and integrates Home Manager. |
 | `lib/` | Contains filesystem module discovery and host-construction helpers. |
 | `hosts/<name>/default.nix` | Declares host identity and enables reusable features. |
@@ -55,7 +57,7 @@ modules = {
 
 Nushell and WezTerm have separate selectors because Nushell is the user’s login shell while WezTerm is the graphical terminal emulator. Git and Jujutsu are grouped under `modules.vcs`, and editors can be installed independently while one editor is selected as the command-line default.
 
-Home Manager is integrated into the NixOS module graph. The shared `hm` alias points to `home-manager.users.<primary-user>`, while generic Home Manager features retain their own `modules` namespace:
+Home Manager’s official flake-parts module provides the canonical `homeModules` and `homeConfigurations` output interfaces. The repository also preserves `homeManagerModules` as a compatibility alias. At runtime, Home Manager remains integrated into the NixOS module graph; the shared `hm` alias points to `home-manager.users.<primary-user>`, while generic Home Manager features retain their own `modules` namespace:
 
 ```nix
 hm.modules = {
