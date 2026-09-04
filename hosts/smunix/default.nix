@@ -54,6 +54,7 @@
         signal.enable = true;
       };
       fonts.compact.enable = true;
+      viewers.tdf.enable = true;
       editors = {
         default = "helix";
         helix.enable = true;

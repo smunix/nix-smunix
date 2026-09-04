@@ -27,6 +27,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Discord | `modules.desktop.chats.discord.enable` | Installs the Discord desktop chat client through the integrated Home Manager profile. |
 | Signal | `modules.desktop.chats.signal.enable` | Installs Signal Desktop through the integrated Home Manager profile. |
 | Compact fonts | `modules.desktop.fonts.compact.enable` | Applies the 15% smaller GTK, KDE, and X11 font baselines consumed by the desktop and application modules. |
+| TDF | `modules.desktop.viewers.tdf.enable` | Installs TDF, a terminal-based PDF viewer that runs inside the configured terminal workspace. |
 | Editor selector | `modules.desktop.editors.default` | Sets `EDITOR` and `VISUAL` to the selected editor in both system and Home Manager session environments. |
 | Helix | `modules.desktop.editors.helix.enable` | Installs and configures Helix, including relative line numbers and automatic formatting. |
 | Vim | `modules.desktop.editors.vim.enable` | Installs Vim through Home Manager. |
@@ -74,4 +75,4 @@ This document summarizes the reusable modules and composition helpers in this co
 
 ## Feature selection
 
-The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
+The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. The separate TDF viewer module is enabled for terminal-based PDF viewing. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
