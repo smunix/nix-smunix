@@ -42,6 +42,8 @@ This document summarizes the reusable modules and composition helpers in this co
 | Rust | `modules.develop.rust.enable` | Provides Rust, Cargo, rustfmt, Clippy, and rust-analyzer. |
 | Haskell | `modules.develop.haskell.enable` | Provides GHC, Cabal, Haskell Language Server, and HLint. |
 | Python | `modules.develop.python.enable` | Provides Python 3, uv, Ruff, and Pyright. |
+| Typst | `modules.develop.typst.enable` | Provides Typst, the Tinymist language server, and Typstyle formatter. |
+| Quarto | `modules.develop.quarto.enable` | Provides Quarto for scientific and technical publishing workflows. |
 | Nushell selector | `modules.shell.default = "nushell"` | Adds Nushell as the primary user’s valid login shell and exports it through system, Home Manager session, and Nushell environments. |
 | Starship | `modules.shell.starship.enable` | Enables the Starship prompt for Nushell and Bash, including OS and Kubernetes context indicators. |
 | Zellij | `modules.shell.zellij.enable` | Installs and configures Zellij as a tmux alternative, with Nushell as its pane shell and Helix as its scrollback editor. |
@@ -72,4 +74,4 @@ This document summarizes the reusable modules and composition helpers in this co
 
 ## Feature selection
 
-The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
+The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.

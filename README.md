@@ -33,6 +33,8 @@ modules = {
     haskell.enable = true;
     python.enable = true;
     rust.enable = true;
+    typst.enable = true;
+    # quarto.enable = true;
   };
 
   shell = {
@@ -69,6 +71,8 @@ modules = {
   };
 };
 ```
+
+Typst provides the Typst compiler, Tinymist language server, and Typstyle formatter. Quarto remains available as an opt-in publishing feature through `modules.develop.quarto.enable`.
 
 Nushell and the terminal selector remain separate because Nushell is the user’s login shell while Ghostty and WezTerm are graphical terminal emulators. Ghostty is the selected default and both terminals explicitly start Nushell; WezTerm remains installed as an alternative. Starship supplies the Nushell prompt. The selected editor is exported as `EDITOR` and `VISUAL` through both the system and Home Manager session environments. Zellij remains available as a tmux alternative and opens Nushell panes with Helix as its scrollback editor. Git and Jujutsu are grouped under `modules.vcs`.
 
