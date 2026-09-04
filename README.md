@@ -17,6 +17,7 @@ This repository defines the `smunix` NixOS system and its Home Manager profile a
 | `modules/home-manager/` | Contains reusable Home Manager feature modules. |
 | `overlays/` | Contains one automatically exported overlay per file. |
 | `pkgs/` | Contains custom packages exposed through the additions overlay. |
+| `MODULES.md` | Provides a complete inventory of custom modules and extension points. |
 
 ## Module conventions
 
@@ -34,7 +35,10 @@ modules = {
     rust.enable = true;
   };
 
-  shell.default = "nushell";
+  shell = {
+    default = "nushell";
+    zellij.enable = true;
+  };
 
   vcs = {
     git.enable = true;
@@ -55,7 +59,7 @@ modules = {
 };
 ```
 
-Nushell and WezTerm have separate selectors because Nushell is the user’s login shell while WezTerm is the graphical terminal emulator. Git and Jujutsu are grouped under `modules.vcs`, and editors can be installed independently while one editor is selected as the command-line default.
+Nushell and WezTerm have separate selectors because Nushell is the user’s login shell while WezTerm is the graphical terminal emulator. When both are selected, WezTerm explicitly starts a Nushell login process. The selected editor is exported as `EDITOR` and `VISUAL` through both the system and Home Manager session environments. Zellij is available as a tmux alternative and is configured to open Nushell panes and use Helix for scrollback editing. Git and Jujutsu are grouped under `modules.vcs`.
 
 Home Manager’s official flake-parts module provides the canonical `homeModules` and `homeConfigurations` output interfaces. The repository also preserves `homeManagerModules` as a compatibility alias. At runtime, Home Manager remains integrated into the NixOS module graph; the shared `hm` alias points to `home-manager.users.<primary-user>`, while generic Home Manager features retain their own `modules` namespace:
 

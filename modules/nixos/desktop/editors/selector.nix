@@ -25,5 +25,10 @@ in {
       EDITOR = commands.${cfg.default};
       VISUAL = commands.${cfg.default};
     };
+
+    hm.home.sessionVariables = {
+      EDITOR = commands.${cfg.default};
+      VISUAL = commands.${cfg.default};
+    };
   };
 }

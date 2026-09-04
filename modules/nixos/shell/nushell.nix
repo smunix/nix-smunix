@@ -17,13 +17,22 @@ in {
     users.users.${config.user.name}.shell = pkgs.nushell;
     environment.variables.SHELL = "${pkgs.nushell}/bin/nu";
 
-    hm.programs.nushell = {
-      enable = true;
-      shellAliases = {
-        l = "ls";
-        ll = "ls -la";
-        z = "zeditor";
-        zed = "zeditor";
+    hm = {
+      home.sessionVariables.SHELL = "${pkgs.nushell}/bin/nu";
+
+      programs.nushell = {
+        enable = true;
+        environmentVariables = {
+          SHELL = "${pkgs.nushell}/bin/nu";
+          EDITOR = "hx";
+          VISUAL = "hx";
+        };
+        shellAliases = {
+          l = "ls";
+          ll = "ls -la";
+          z = "zeditor";
+          zed = "zeditor";
+        };
       };
     };
   };

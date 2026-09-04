@@ -27,7 +27,10 @@
       rust.enable = true;
     };
 
-    shell.default = "nushell";
+    shell = {
+      default = "nushell";
+      zellij.enable = true;
+    };
     security.passwordlessSudo.enable = true;
 
     vcs = {

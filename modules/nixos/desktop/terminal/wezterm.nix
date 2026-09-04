@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   cfg = config.modules.desktop.terminal;
@@ -13,6 +14,16 @@ in {
 
   config = lib.mkIf (cfg.default == "wezterm") {
     environment.variables.TERMINAL = "wezterm";
-    hm.programs.wezterm.enable = true;
+
+    hm = {
+      home.sessionVariables.TERMINAL = "wezterm";
+      programs.wezterm = {
+        enable = true;
+        settings.default_prog = [
+          "${pkgs.nushell}/bin/nu"
+          "--login"
+        ];
+      };
+    };
   };
 }
