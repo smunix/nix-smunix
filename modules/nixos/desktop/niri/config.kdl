@@ -93,7 +93,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"(?i)^(org\.kde\.okular|okular|org\.gnome\.evince|evince|xpdf)$"#
+    match app-id=r#"(?i)^(org\.kde\.okular|okular|org\.gnome\.evince|evince|org\.pwmt\.zathura|zathura|io\.mpv\.Mpv|mpv|xpdf)$"#
     open-on-workspace "viewers"
 }
 

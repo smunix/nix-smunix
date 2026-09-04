@@ -100,13 +100,13 @@ Normal application windows open maximized to Niri’s usable workspace area. Noc
 |---|---|---|
 | `Super+1` | `shell` | WezTerm, Ghostty, XTerm |
 | `Super+2` | `internet` | Firefox, Brave |
-| `Super+3` | `viewers` | Okular, Evince, Xpdf; TDF runs inside the terminal |
+| `Super+3` | `viewers` | Okular, Evince, Zathura, MPV, Xpdf; TDF runs inside the terminal |
 | `Super+4` | `programming` | Zed (`zeditor`) |
 | `Super+5` | `explorers` | Dolphin |
 | `Super+6` | `chats` | Discord, Signal Desktop |
 | `Super+7` | `dumpster` | Any normal application not matched by a more specific rule |
 
-The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular and Evince remain installed as the default graphical PDF viewers. TDF is enabled independently as a terminal PDF viewer; run `tdf document.pdf` from Ghostty, WezTerm, or XTerm.
+The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular, Evince, and Zathura are installed as the graphical document viewers; MPV is installed for media playback. TDF is enabled independently as a terminal PDF viewer; run `tdf document.pdf` from Ghostty, WezTerm, or XTerm.
 
 Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace. Other desktop controls include `Super+Return` for Ghostty, `Super+D` or `Super+Space` for the launcher, `Super+S` for Control Center, `Super+E` for the session menu, `Super+Shift+V` for clipboard history, `Super+Shift+W` for wallpapers, `Super+Shift+,` for settings, `Super+Shift+D` for desktop-widget editing, `Ctrl+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
 
