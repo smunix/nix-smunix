@@ -19,9 +19,31 @@
       printing.enable = true;
     };
 
+    develop = {
+      cc.enable = true;
+      haskell.enable = true;
+      python.enable = true;
+      rust.enable = true;
+    };
+
+    shell.default = "nushell";
+
+    vcs = {
+      git.enable = true;
+      jujutsu.enable = true;
+    };
+
     desktop = {
       plasma.enable = true;
       niri.enable = true;
+      terminal.default = "wezterm";
+      browsers.brave.enable = true;
+      editors = {
+        default = "helix";
+        helix.enable = true;
+        vim.enable = true;
+        zed.enable = true;
+      };
     };
 
     programs = {
@@ -33,6 +55,5 @@
   hm.modules = {
     base.enable = true;
     packages.enable = true;
-    programs.git.enable = true;
   };
 }

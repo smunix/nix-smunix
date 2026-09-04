@@ -24,18 +24,43 @@ Each NixOS feature owns an option below the `modules` namespace. The `smunix` ho
 modules = {
   networking.networkManager.enable = true;
   hardware.pipewire.enable = true;
-  desktop.plasma.enable = true;
-  programs.firefox.enable = true;
+
+  develop = {
+    cc.enable = true;
+    haskell.enable = true;
+    python.enable = true;
+    rust.enable = true;
+  };
+
+  shell.default = "nushell";
+
+  vcs = {
+    git.enable = true;
+    jujutsu.enable = true;
+  };
+
+  desktop = {
+    plasma.enable = true;
+    terminal.default = "wezterm";
+    browsers.brave.enable = true;
+    editors = {
+      default = "helix";
+      helix.enable = true;
+      vim.enable = true;
+      zed.enable = true;
+    };
+  };
 };
 ```
 
-Home Manager is integrated into the NixOS module graph. The shared `hm` alias points to `home-manager.users.<primary-user>`, while Home Manager features use their own `modules` namespace:
+Nushell and WezTerm have separate selectors because Nushell is the user’s login shell while WezTerm is the graphical terminal emulator. Git and Jujutsu are grouped under `modules.vcs`, and editors can be installed independently while one editor is selected as the command-line default.
+
+Home Manager is integrated into the NixOS module graph. The shared `hm` alias points to `home-manager.users.<primary-user>`, while generic Home Manager features retain their own `modules` namespace:
 
 ```nix
 hm.modules = {
   base.enable = true;
   packages.enable = true;
-  programs.git.enable = true;
 };
 ```
 
