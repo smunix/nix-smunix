@@ -1,37 +1,31 @@
 {
-  description = "Your new nix config";
+  description = "Modular NixOS and Home Manager configuration for smunix";
 
   inputs = {
-    # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
-    # You can access packages and modules from different nixpkgs revs
-    # at the same time. Here's an working example:
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    # Also see the 'unstable-packages' overlay at 'overlays/default.nix'.
 
-    # Home manager
-    home-manager.url = "github:nix-community/home-manager/release-26.05";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     vicinae.url = "github:vicinaehq/vicinae";
+
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     nix-colors.url = "github:misterio77/nix-colors";
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    home-manager,
-    ...
-  } @ inputs: let
-    # Supported systems for your flake packages, shell, etc.
+  outputs = inputs @ {nixpkgs, ...}: let
     systems = [
       "aarch64-linux"
       "i686-linux"
@@ -39,51 +33,42 @@
       "aarch64-darwin"
       "x86_64-darwin"
     ];
-    # This is a function that generates an attribute by calling a function you
-    # pass to it, with each system as an argument
+
     forAllSystems = nixpkgs.lib.genAttrs systems;
-  in {
-    # Your custom packages
-    # Accessible through 'nix build', 'nix shell', etc
-    packages = forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
-    # Formatter for your nix files, available through 'nix fmt'
-    # Other options beside 'alejandra' include 'nixpkgs-fmt'
-    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
-    # Your custom packages and modifications, exported as overlays
-    overlays = import ./overlays {inherit inputs;};
-    # Reusable nixos modules you might want to export
-    # These are usually stuff you would upstream into nixpkgs
-    nixosModules = import ./modules/nixos;
-    # Reusable home-manager modules you might want to export
-    # These are usually stuff you would upstream into home-manager
-    homeManagerModules = import ./modules/home-manager;
-
-    # NixOS configuration entrypoint
-    # Available through 'nixos-rebuild --flake .#your-hostname'
-    nixosConfigurations = {
-      smunix = nixpkgs.lib.nixosSystem {
-        specialArgs = {inherit inputs;};
-        modules = [
-          # > Our main nixos configuration file <
-          ./nixos/smunix/configuration.nix
-        ];
+    lib = nixpkgs.lib.extend (_final: _prev: {
+      my = import ./lib {
+        inherit inputs;
+        inherit (nixpkgs) lib;
       };
-    };
+    });
+  in {
+    lib = lib.my;
 
-    # Standalone home-manager configuration entrypoint
-    # Available through 'home-manager --flake .#your-username@your-hostname'
-    # homeConfigurations = {
-    #   # FIXME replace with your username@hostname
-    #   "smunix@smunix" = home-manager.lib.homeManagerConfiguration {
-    #     # Home-manager requires 'pkgs' instance
-    #     pkgs = nixpkgs.legacyPackages.x86_64-linux; # FIXME replace x86_64-linux with your architecture 
-    #     extraSpecialArgs = {inherit inputs;};
-    #     modules = [
-    #       # > Our main home-manager configuration file <
-    #       ./home-manager/home.nix
-    #     ];
-    #   };
-    # };
+    packages = forAllSystems (
+      system: import ./pkgs nixpkgs.legacyPackages.${system}
+    );
+
+    formatter = forAllSystems (
+      system: nixpkgs.legacyPackages.${system}.alejandra
+    );
+
+    overlays = lib.my.mapModules ./overlays (
+      path: import path {inherit inputs;}
+    );
+
+    nixosModules =
+      {
+        default = import ./.;
+      }
+      // lib.my.mapModulesRec ./modules/nixos import;
+
+    homeManagerModules =
+      {
+        default = import ./modules/home-manager;
+      }
+      // lib.my.mapModulesRec ./modules/home-manager import;
+
+    nixosConfigurations = lib.my.mapHosts ./hosts {};
   };
 }
