@@ -58,16 +58,19 @@ workspace "viewers"
 workspace "programming"
 workspace "explorers"
 workspace "chats"
+workspace "dumpster"
 
 window-rule {
     geometry-corner-radius 20
     clip-to-geometry true
 }
 
-// Normal applications fill the usable workspace area when they open.
+// Normal applications fill the usable area and default to the dumpster.
+// Later application-specific rules override this workspace destination.
 window-rule {
     exclude app-id=r#"(?i)^dev\.noctalia\.Noctalia$"#
     open-maximized true
+    open-on-workspace "dumpster"
 }
 
 // Keep Noctalia's settings surface as a centered floating window.
@@ -218,12 +221,14 @@ binds {
     Mod+4 { focus-workspace "programming"; }
     Mod+5 { focus-workspace "explorers"; }
     Mod+6 { focus-workspace "chats"; }
+    Mod+7 { focus-workspace "dumpster"; }
     Mod+Ctrl+1 { move-column-to-workspace "shell"; }
     Mod+Ctrl+2 { move-column-to-workspace "internet"; }
     Mod+Ctrl+3 { move-column-to-workspace "viewers"; }
     Mod+Ctrl+4 { move-column-to-workspace "programming"; }
     Mod+Ctrl+5 { move-column-to-workspace "explorers"; }
     Mod+Ctrl+6 { move-column-to-workspace "chats"; }
+    Mod+Ctrl+7 { move-column-to-workspace "dumpster"; }
 
     // Layout controls.
     Mod+BracketLeft { consume-or-expel-window-left; }
