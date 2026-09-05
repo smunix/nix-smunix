@@ -21,6 +21,7 @@ in {
         font-size = 11.05;
         window-decoration = false;
         background-opacity = 0.93;
+        copy-on-select = "clipboard";
         scrollback-limit = 20000;
         command = "${pkgs.bash}/bin/bash --login -c '${pkgs.nushell}/bin/nu --login --interactive'";
       };
