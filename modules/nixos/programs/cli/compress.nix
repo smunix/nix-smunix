@@ -12,6 +12,8 @@ in {
   config = lib.mkIf cfg.enable {
     user.packages = with pkgs; [
       dtrx
+      unzip
     ];
   };
 }
+

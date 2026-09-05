@@ -11,6 +11,9 @@ in {
 
   config = lib.mkIf cfg.enable {
     user.packages = with pkgs; [
+      bat
+      bottom
+      btop
       coreutils
       dmidecode
       pciutils

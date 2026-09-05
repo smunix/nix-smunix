@@ -100,6 +100,7 @@
         compress.enable = true;
         search.enable = true;
         system.enable = true;
+        videos.enable = true;
       };
     };
   };
