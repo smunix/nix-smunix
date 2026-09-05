@@ -58,6 +58,12 @@ modules = {
     zellij.enable = true;
   };
 
+  security.yubikey = {
+    enable = true;
+    origin = "pam://smunix";
+    appId = "pam://smunix";
+  };
+
   vcs = {
     git.enable = true;
     jujutsu.enable = true;
@@ -162,6 +168,75 @@ sudo nixos-rebuild switch --flake .#smunix
 
 The host’s filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix`. Keep those values aligned with the machine’s generated hardware configuration.
 
-## Passwordless sudo
+## YubiKey authentication
 
-The `smunix` host enables `modules.security.passwordlessSudo`. This feature adds a `NOPASSWD` sudo rule only for the configured primary user, `smunix`; it does not relax the password requirement for every member of the `wheel` group. Since unrestricted passwordless sudo grants full administrator access, enable it only on a machine where that access model is intentional.
+The `smunix` host enables `modules.security.yubikey`. PAM treats a successful YubiKey touch as sufficient authentication for local PAM services, including SDDM login, login consoles, screen lockers, sudo, su, and polkit. If the key is absent or authentication fails, PAM continues to the normal password path so recovery remains possible.
+
+The mapping is deployed centrally as `/etc/security/u2f_mappings`, which makes it available before an encrypted home directory is opened. The module also installs YubiKey Manager, PC/SC support, Yubico udev rules, and a rule that locks active sessions when a Yubico USB device is removed.
+
+The previous `modules.security.passwordlessSudo` feature remains reusable but is not enabled for `smunix`, because a `NOPASSWD` sudo rule would bypass PAM and therefore bypass the YubiKey.
+
+Before ending a root recovery shell, test the new configuration in another terminal:
+
+```sh
+sudo -i
+sudo nixos-rebuild test --flake .#smunix
+nix shell nixpkgs#pamtester -c pamtester login smunix authenticate
+nix shell nixpkgs#pamtester -c pamtester sudo smunix authenticate
+```
+
+## Private secrets input
+
+The non-flake `secrets` input points to a private repository and expects this layout:
+
+```text
+hosts/
+└── smunix/
+    ├── security/
+    │   └── u2f_keys
+    └── sops/
+        └── example.yaml
+.sops.yaml
+```
+
+The U2F mapping uses one user per line. The following values are deliberately fake:
+
+```text
+<username>:<key-handle>,<public-key>,es256,+presence
+<username>:<first-handle>,<first-public-key>,es256,+presence:<second-handle>,<second-public-key>,es256,+presence
+```
+
+Future confidential values must be committed only in encrypted form. A mock encrypted SOPS document has this shape:
+
+```yaml
+service:
+  api_token: ENC[AES256_GCM,data:MOCK_CIPHERTEXT,type:str]
+sops:
+  age:
+    - recipient: age1mockrecipient000000000000000000000000000000000000000000000000
+      enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        MOCK-ENCRYPTED-FILE-KEY
+        -----END AGE ENCRYPTED FILE-----
+  version: 3.9.0
+```
+
+Do not commit passwords, API tokens, recovery codes, private SSH keys, age identity files, unencrypted environment files, or decrypted SOPS output. A private repository controls remote access but does not encrypt the flake source after checkout; Nix copies input source files into the local Nix store during evaluation. The plain U2F mapping contains a credential handle and public key rather than the authenticator’s private key, but it still reveals identity and device metadata and should remain private.
+
+The private input requires an authenticated Nix fetch. Do not place an access token in `flake.nix`, `nix.conf` managed by this repository, or the private source repository itself. With an authenticated GitHub CLI session, update and prefetch the input as the unprivileged user:
+
+```sh
+export NIX_CONFIG="access-tokens = github.com=$(gh auth token)"
+nix flake lock --update-input secrets
+nix flake archive
+unset NIX_CONFIG
+```
+
+After changing the private repository, repeat those commands before rebuilding. If root cannot authenticate to the private input, evaluate and build as the authenticated user, then switch the already-built system closure:
+
+```sh
+export NIX_CONFIG="access-tokens = github.com=$(gh auth token)"
+nix build .#nixosConfigurations.smunix.config.system.build.toplevel
+unset NIX_CONFIG
+sudo ./result/bin/switch-to-configuration switch
+```

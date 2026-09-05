@@ -293,7 +293,24 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "noctalia": "noctalia",
+        "secrets": "secrets",
         "vicinae": "vicinae"
+      }
+    },
+    "secrets": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788649761,
+        "narHash": "sha256-U4u2o7o7VNbyGQTFNL3uKkP/Zt4kqqVtJGV0tZk932I=",
+        "owner": "smunix",
+        "repo": "secrets",
+        "rev": "48c3e517bcf614c70a599e225a86cf4a2598dbfc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "smunix",
+        "repo": "secrets",
+        "type": "github"
       }
     },
     "soulver-cpp": {

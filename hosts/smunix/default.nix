@@ -46,7 +46,11 @@
       starship.enable = true;
       zellij.enable = true;
     };
-    security.passwordlessSudo.enable = true;
+    security.yubikey = {
+      enable = true;
+      origin = "pam://smunix";
+      appId = "pam://smunix";
+    };
 
     vcs = {
       git.enable = true;

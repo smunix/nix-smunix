@@ -67,7 +67,8 @@ This document summarizes the reusable modules and composition helpers in this co
 | UPower | `modules.hardware.power.upower.enable` | Provides percentage-based battery telemetry, warning levels, desktop integration, and critical-power handling. |
 | Lid actions | `modules.hardware.power.lid.enable` | Configures logind actions for lid closure on battery, external power, and while docked. |
 | NVIDIA PRIME | `modules.hardware.nvidia.enable` | Enables NVIDIA graphics, modesetting, fine-grained runtime power management, the open kernel module, settings tools, and PRIME offload using required host-specific PCI bus IDs. |
-| Passwordless sudo | `modules.security.passwordlessSudo.enable` | Grants the configured primary user a `NOPASSWD` sudo rule without changing the password requirement for other wheel users. |
+| Passwordless sudo | `modules.security.passwordlessSudo.enable` | Grants the configured primary user a `NOPASSWD` sudo rule without changing the password requirement for other wheel users; retained as an opt-in feature but disabled on `smunix`. |
+| YubiKey U2F | `modules.security.yubikey.enable` | Enables passwordless PAM authentication with password fallback, deploys a central private-input mapping, installs hardware support, and optionally locks sessions when a Yubico USB device is removed. |
 
 ## Flake composition and extension points
 
@@ -76,6 +77,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | flake-parts entry point | `flake.nix` | Declares inputs and delegates output composition to flake-parts. |
 | Top-level flake outputs | `parts/flake.nix` | Exports the helper library, overlays, recursive NixOS and Home Manager module trees, and discovered NixOS hosts. |
 | Per-system outputs | `parts/per-system.nix` | Defines packages and the Alejandra formatter for supported systems. |
+| Private source input | `inputs.secrets` | Supplies host-specific U2F mappings and future encrypted payloads as a pinned non-flake input. |
 | Discovery helpers | `lib/attrs.nix`, `lib/modules.nix`, `lib/nixos.nix` | Provide attribute helpers, filesystem-based module discovery, and automatic host construction. |
 | Custom package overlay | `overlays/additions.nix` | Extension point for locally packaged additions. |
 | Package modification overlay | `overlays/modifications.nix` | Extension point for package overrides. |
@@ -84,4 +86,4 @@ This document summarizes the reusable modules and composition helpers in this co
 
 ## Feature selection
 
-The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, TLP with UPower telemetry, suspend-on-lid-close behavior, NVIDIA PRIME offload with host-specific PCI IDs, the search and system utility groups, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. The separate TDF, Zathura, and MPV viewer modules are enabled for terminal and graphical document or media viewing. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
+The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, TLP with UPower telemetry, suspend-on-lid-close behavior, NVIDIA PRIME offload with host-specific PCI IDs, the search and system utility groups, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, YubiKey U2F authentication with password fallback, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. The separate TDF, Zathura, and MPV viewer modules are enabled for terminal and graphical document or media viewing. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
