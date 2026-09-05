@@ -83,6 +83,7 @@
     programs = {
       firefox.enable = true;
       cli = {
+        compress.enable = true;
         search.enable = true;
         system.enable = true;
       };
