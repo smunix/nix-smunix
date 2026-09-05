@@ -58,10 +58,20 @@ modules = {
     zellij.enable = true;
   };
 
-  security.yubikey = {
-    enable = true;
-    origin = "pam://smunix";
-    appId = "pam://smunix";
+  security = {
+    yubikey = {
+      enable = true;
+      origin = "pam://smunix";
+      appId = "pam://smunix";
+    };
+
+    luksFido2 = {
+      enable = true;
+      devices = [
+        "luks-cf3ef773-afb0-4a61-9c7c-ebb776b3d904"
+        "luks-3de955a1-3d2d-46bc-9c4c-d2f92137a73a"
+      ];
+    };
   };
 
   vcs = {
@@ -184,6 +194,27 @@ sudo nixos-rebuild test --flake .#smunix
 nix shell nixpkgs#pamtester -c pamtester login smunix authenticate
 nix shell nixpkgs#pamtester -c pamtester sudo smunix authenticate
 ```
+
+## LUKS FIDO2 unlocking
+
+The `modules.security.luksFido2` feature enables the systemd-based initrd and explicitly includes its FIDO2 support. The `smunix` host selects both machine-specific entries already declared in `hosts/smunix/hardware.nix`: the encrypted root volume and encrypted swap volume. Each generated initrd crypttab row receives `fido2-device=auto`, which consumes the token metadata previously written to that volume by `systemd-cryptenroll`.
+
+This configuration does not alter LUKS slots, erase passphrases, or suppress the recovery prompt. Keep at least one tested passphrase or recovery-key slot on every encrypted volume. If the key is unavailable or FIDO2 authentication fails, enter that passphrase when systemd asks for it. Because root and swap have independent LUKS2 headers, boot may require a separate key interaction for each volume.
+
+Inspect both LUKS2 headers before scheduling the new boot generation:
+
+```sh
+sudo cryptsetup luksDump /dev/disk/by-uuid/cf3ef773-afb0-4a61-9c7c-ebb776b3d904
+sudo cryptsetup luksDump /dev/disk/by-uuid/3de955a1-3d2d-46bc-9c4c-d2f92137a73a
+```
+
+Confirm that each header contains the expected `systemd-fido2` token, then build a boot generation without immediately replacing the running system:
+
+```sh
+sudo nixos-rebuild boot --flake .#smunix
+```
+
+Reboot with the YubiKey inserted and follow the early-boot prompt. Keep the passphrase available during this first boot. If the new initrd cannot unlock the root volume, select the previous NixOS generation from the bootloader and remove or correct the new configuration before trying again.
 
 ## Private secrets input
 

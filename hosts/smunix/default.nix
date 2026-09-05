@@ -46,10 +46,20 @@
       starship.enable = true;
       zellij.enable = true;
     };
-    security.yubikey = {
-      enable = true;
-      origin = "pam://smunix";
-      appId = "pam://smunix";
+    security = {
+      yubikey = {
+        enable = true;
+        origin = "pam://smunix";
+        appId = "pam://smunix";
+      };
+
+      luksFido2 = {
+        enable = true;
+        devices = [
+          "luks-cf3ef773-afb0-4a61-9c7c-ebb776b3d904"
+          "luks-3de955a1-3d2d-46bc-9c4c-d2f92137a73a"
+        ];
+      };
     };
 
     vcs = {
