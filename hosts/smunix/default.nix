@@ -18,6 +18,19 @@
     hardware = {
       pipewire.enable = true;
       printing.enable = true;
+      power = {
+        backend = "tlp";
+        lid.enable = true;
+        tlp = {
+          startChargeThreshold = 75;
+          stopChargeThreshold = 80;
+        };
+      };
+      nvidia = {
+        enable = true;
+        intelBusId = "PCI:0:2:0";
+        nvidiaBusId = "PCI:1:0:0";
+      };
     };
 
     develop = {
@@ -67,7 +80,13 @@
       };
     };
 
-    programs.firefox.enable = true;
+    programs = {
+      firefox.enable = true;
+      cli = {
+        search.enable = true;
+        system.enable = true;
+      };
+    };
   };
 
   hm.modules = {

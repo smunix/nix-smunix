@@ -35,6 +35,8 @@ This document summarizes the reusable modules and composition helpers in this co
 | Vim | `modules.desktop.editors.vim.enable` | Installs Vim through Home Manager. |
 | Zed | `modules.desktop.editors.zed.enable` | Installs and configures Zed with Vim mode and Nix language support. |
 | Firefox | `modules.programs.firefox.enable` | Enables Firefox. |
+| Search utilities | `modules.programs.cli.search.enable` | Installs `ack`, `ripgrep`, and `fd` as a focused text and filesystem search toolset. |
+| System utilities | `modules.programs.cli.system.enable` | Installs `coreutils` and `pciutils` as foundational command-line inspection tools. |
 | Waybar | `modules.programs.waybar.enable` | Enables Waybar as a standalone program feature for desktop environments that use it. |
 
 ## Development, shell, and version-control features
@@ -60,6 +62,11 @@ This document summarizes the reusable modules and composition helpers in this co
 | NetworkManager | `modules.networking.networkManager.enable` | Enables NetworkManager-based networking. |
 | PipeWire | `modules.hardware.pipewire.enable` | Enables PipeWire, WirePlumber, and ALSA/PulseAudio compatibility. |
 | Printing | `modules.hardware.printing.enable` | Enables CUPS printing. |
+| Power selector | `modules.hardware.power.backend` | Selects `upower` or `tlp`; TLP remains the policy engine while retaining UPower for desktop battery telemetry. |
+| TLP | `modules.hardware.power.tlp.enable` | Disables the conflicting power-profiles daemon, enables TLP and its profile compatibility service, configures AC/battery CPU policies, runtime PCI power management, and configurable BAT0 charge thresholds. |
+| UPower | `modules.hardware.power.upower.enable` | Provides percentage-based battery telemetry, warning levels, desktop integration, and critical-power handling. |
+| Lid actions | `modules.hardware.power.lid.enable` | Configures logind actions for lid closure on battery, external power, and while docked. |
+| NVIDIA PRIME | `modules.hardware.nvidia.enable` | Enables NVIDIA graphics, modesetting, fine-grained runtime power management, the open kernel module, settings tools, and PRIME offload using required host-specific PCI bus IDs. |
 | Passwordless sudo | `modules.security.passwordlessSudo.enable` | Grants the configured primary user a `NOPASSWD` sudo rule without changing the password requirement for other wheel users. |
 
 ## Flake composition and extension points
@@ -77,4 +84,4 @@ This document summarizes the reusable modules and composition helpers in this co
 
 ## Feature selection
 
-The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. The separate TDF, Zathura, and MPV viewer modules are enabled for terminal and graphical document or media viewing. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
+The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, TLP with UPower telemetry, suspend-on-lid-close behavior, NVIDIA PRIME offload with host-specific PCI IDs, the search and system utility groups, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy, passwordless sudo for the primary user, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. The separate TDF, Zathura, and MPV viewer modules are enabled for terminal and graphical document or media viewing. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.

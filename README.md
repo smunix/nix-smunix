@@ -26,7 +26,22 @@ Each NixOS feature owns an option below the `modules` namespace. The `smunix` ho
 ```nix
 modules = {
   networking.networkManager.enable = true;
-  hardware.pipewire.enable = true;
+  hardware = {
+    pipewire.enable = true;
+    power = {
+      backend = "tlp";
+      lid.enable = true;
+      tlp = {
+        startChargeThreshold = 75;
+        stopChargeThreshold = 80;
+      };
+    };
+    nvidia = {
+      enable = true;
+      intelBusId = "PCI:0:2:0";
+      nvidiaBusId = "PCI:1:0:0";
+    };
+  };
 
   develop = {
     cc.enable = true;
@@ -62,7 +77,11 @@ modules = {
       signal.enable = true;
     };
     fonts.compact.enable = true;
-    viewers.tdf.enable = true;
+    viewers = {
+      mpv.enable = true;
+      tdf.enable = true;
+      zathura.enable = true;
+    };
     editors = {
       default = "helix";
       helix.enable = true;
@@ -70,8 +89,20 @@ modules = {
       zed.enable = true;
     };
   };
+
+  programs = {
+    firefox.enable = true;
+    cli = {
+      search.enable = true;
+      system.enable = true;
+    };
+  };
 };
 ```
+
+The `tlp` power backend disables the conflicting power-profiles daemon, enables TLP’s compatible profile service, keeps UPower available for battery telemetry and desktop integration, applies the 75–80% charge window, and suspends on lid closure except while docked. The NVIDIA PRIME PCI bus IDs remain values in the `smunix` host manifest rather than reusable module defaults.
+
+The command-line utility groups install `ack`, `ripgrep`, and `fd` through `modules.programs.cli.search`, and `coreutils` plus `pciutils` through `modules.programs.cli.system`.
 
 Typst provides the Typst compiler, Tinymist language server, and Typstyle formatter. Quarto remains available as an opt-in publishing feature through `modules.develop.quarto.enable`.
 
