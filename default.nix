@@ -2,9 +2,27 @@
   config,
   inputs,
   lib,
+  pkgs,
   ...
 }: let
   inherit (lib.modules) mkAliasOptionModule;
+
+  timestampedHomeManagerBackup = pkgs.writeShellScript "home-manager-timestamped-backup" ''
+    set -euo pipefail
+
+    target="$1"
+    timestamp="$(${pkgs.coreutils}/bin/date -u +%Y%m%dT%H%M%S.%N)"
+    backupPath="$target.backup-$timestamp"
+    suffix=0
+
+    while [[ -e "$backupPath" || -L "$backupPath" ]]; do
+      suffix=$((suffix + 1))
+      backupPath="$target.backup-$timestamp-$suffix"
+    done
+
+    printf 'Backing up %s to %s\n' "$target" "$backupPath" >&2
+    ${pkgs.coreutils}/bin/mv -- "$target" "$backupPath"
+  '';
 in {
   imports =
     [
@@ -20,7 +38,7 @@ in {
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    backupFileExtension = "backup";
+    backupCommand = "${timestampedHomeManagerBackup}";
     extraSpecialArgs = {inherit inputs;};
     sharedModules = [
       (import ./modules/home-manager)

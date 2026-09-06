@@ -178,6 +178,16 @@ sudo nixos-rebuild switch --flake .#smunix
 
 The host’s filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix`. Keep those values aligned with the machine’s generated hardware configuration.
 
+## Home Manager conflict backups
+
+The shared root module configures `home-manager.backupCommand` with a generated backup script. When Home Manager encounters an unmanaged file at a path it must control, the script moves that file to a sibling path using this format:
+
+```text
+<original-path>.backup-<UTC timestamp>
+```
+
+The timestamp includes nanoseconds, and the script adds a numeric suffix if the generated destination already exists. Existing backups are never overwritten. This replaces the previous fixed `.backup` extension, so a file such as `~/.gtkrc-2.0.backup` cannot block a later activation.
+
 ## YubiKey authentication
 
 The `smunix` host enables `modules.security.yubikey`. PAM treats a successful YubiKey touch as sufficient authentication for local PAM services, including SDDM login, login consoles, screen lockers, sudo, su, and polkit. If the key is absent or authentication fails, PAM continues to the normal password path so recovery remains possible.

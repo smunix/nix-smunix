@@ -7,7 +7,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Component | Interface or location | Responsibility |
 |---|---|---|
 | Shared user options | `modules/nixos/options.nix` | Defines the primary user’s name, display name, email, home directory, groups, and user packages. It also projects these values into the NixOS account and integrated Home Manager account. |
-| Shared NixOS base | `default.nix` | Applies host-wide defaults, imports reusable NixOS modules, and integrates Home Manager into the NixOS configuration. |
+| Shared NixOS base | `default.nix` | Applies host-wide defaults, imports reusable NixOS modules, integrates Home Manager, and backs up conflicting user files with collision-resistant UTC timestamps. |
 | Base Home Manager profile | `modules/home-manager/base.nix` | Enables the shared Home Manager identity, state version, and user-environment baseline. |
 | General Home Manager packages | `modules/home-manager/packages.nix` | Installs the non-feature-specific user package profile. |
 | Home Manager module aggregate | `modules/home-manager/default.nix` | Recursively imports the Home Manager feature tree for both NixOS-integrated and exported use. |
