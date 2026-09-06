@@ -399,22 +399,121 @@ The U2F mapping uses one user per line. The following values are deliberately fa
 <username>:<first-handle>,<first-public-key>,es256,+presence:<second-handle>,<second-public-key>,es256,+presence
 ```
 
-Application credentials must be committed only as encrypted payloads. For Kimi Code, create this complete TOML outside both repositories using mock values during documentation or testing:
+The problem this repository solves is that application credentials must be reproducible without becoming public, entering Git history as plaintext, or being copied into the Nix store unencrypted. The private repository therefore contains only encrypted application payloads and public recipient metadata. **Private decryption keys never belong in `nix-secrets`; they remain on the machine under `~/.ssh`.**
+
+### Updating `nix-secrets`
+
+Clone the private repository once, or update an existing checkout before making changes:
+
+```sh
+gh repo clone smunix/nix-secrets ~/src/nix-secrets
+cd ~/src/nix-secrets
+git pull --ff-only
+```
+
+Make the required encrypted or public-metadata change, then review only file names and statistics before committing. Never stage a plaintext configuration:
+
+```sh
+git status --short
+git diff --check
+git diff --stat
+git add .age-recipients hosts/smunix/apps/kimi-code/config.toml.age
+git commit -m "chore: rotate Kimi credentials"
+git push
+```
+
+After every private-repository push, update the pinned `secrets` revision in `nix-smunix`. The private input uses SSH transport, so run the update and build as `smunix` while the SSH identity or agent can access `nix-secrets`; do not run the fetch as root. Switch only the already-built closure with `sudo`:
+
+```sh
+cd ~/nix-config
+ssh-add -l
+nix flake lock --update-input secrets
+nix build .#nixosConfigurations.smunix.config.system.build.toplevel
+
+git add flake.lock
+git commit -m "chore: update private secrets input"
+sudo ./result/bin/switch-to-configuration switch
+systemctl --user restart kimi-code-config.service
+```
+
+Verify the service and permissions without printing the secret:
+
+```sh
+systemctl --user status kimi-code-config.service
+stat -c '%a %n' ~/.kimi-code ~/.kimi-code/config.toml
+kimi
+```
+
+The expected modes are `700` for `~/.kimi-code` and `600` for `config.toml`.
+
+### Rotating the Kimi API key
+
+Create the replacement TOML in a private temporary file. The example value below is deliberately fake:
 
 ```toml
 [providers.moonshot]
 api_key = "mock_api_key_never_commit_a_real_value"
 ```
 
-Encrypt the complete file to every SSH public key listed in `.age-recipients`:
+Use a restrictive umask, encrypt the complete file to every public key in `.age-recipients`, verify that the current private identity can decrypt the result, and securely remove temporary plaintext:
 
 ```sh
-age -R /path/to/nix-secrets/.age-recipients \
-  -o /path/to/nix-secrets/hosts/smunix/apps/kimi-code/config.toml.age \
-  /secure/temporary/config.toml
+cd ~/src/nix-secrets
+umask 077
+plain="$(mktemp)"
+cipher="$(mktemp)"
+trap 'shred -u "$plain" "$cipher" 2>/dev/null || rm -f "$plain" "$cipher"' EXIT
+
+$EDITOR "$plain"
+age -R .age-recipients < "$plain" > "$cipher"
+age --decrypt --identity ~/.ssh/id_ed25519 "$cipher" >/dev/null
+install -m 0644 "$cipher" hosts/smunix/apps/kimi-code/config.toml.age
+shred -u "$plain"
 ```
 
-Securely delete the plaintext after encryption, commit only `config.toml.age`, push the private repository, and update the `secrets` flake lock. The `kimi-code-config` Home Manager user service tries `~/.ssh/id_ed25519`, `~/.ssh/id_ed25519_sk`, and `~/.ssh/id_rsa` in that order. A matching private key decrypts the payload directly into `~/.kimi-code/config.toml` with mode `0600`. Run `systemctl --user start kimi-code-config.service` to materialize or refresh the file immediately.
+Commit and push only the `.age` file, then follow the `nix-secrets` lock-update and deployment procedure above. Keep the previous private-repository commit available until `kimi` authenticates successfully. If the new API key fails, revert the private-repository commit instead of force-pushing history, update the `secrets` lock again, and redeploy.
+
+### Rotating the age/SSH decryption identity
+
+An age recipient is the **public** half of an SSH key. The matching private key must remain local and must never be copied into either Git repository. Rotate recipients in two stages so the old key continues to provide recovery until the new key is proven.
+
+First, create a new local identity and retain the old one:
+
+```sh
+umask 077
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_next
+cat ~/.ssh/id_ed25519_next.pub
+```
+
+Append the displayed public key to `.age-recipients` without removing the old recipient. Re-encrypt every `.age` payload to the combined recipient set. The following pipeline keeps plaintext off disk:
+
+```sh
+cd ~/src/nix-secrets
+cipher="$(mktemp)"
+trap 'rm -f "$cipher"' EXIT
+
+age --decrypt --identity ~/.ssh/id_ed25519 \
+  hosts/smunix/apps/kimi-code/config.toml.age \
+  | age -R .age-recipients > "$cipher"
+
+age --decrypt --identity ~/.ssh/id_ed25519_next "$cipher" >/dev/null
+install -m 0644 "$cipher" hosts/smunix/apps/kimi-code/config.toml.age
+```
+
+If the new identity uses a non-default path, add it to the host configuration before retiring the old key:
+
+```nix
+modules.ai.kimi.identityPaths = [
+  "/home/smunix/.ssh/id_ed25519_next"
+  "/home/smunix/.ssh/id_ed25519"
+];
+```
+
+Commit and push the updated `.age-recipients` and every re-encrypted payload, update the `secrets` lock, deploy, restart `kimi-code-config.service`, and confirm that the new identity works. To test the new key independently, temporarily stop or rename the old private key only after keeping a separate recovery terminal open.
+
+After successful deployment, remove the old public recipient from `.age-recipients`, re-encrypt every payload again using the new recipient set, repeat the lock update and deployment, and only then archive or securely destroy the old private key. Never remove an old recipient before all payloads have been re-encrypted and tested with the replacement key.
+
+### Other encrypted payloads
 
 SOPS-encrypted documents remain available for future structured secrets. A mock encrypted SOPS document has this shape:
 
@@ -432,21 +531,3 @@ sops:
 ```
 
 Do not commit passwords, API tokens, recovery codes, private SSH keys, age identity files, unencrypted application configurations, environment files, or decrypted SOPS output. A private repository controls remote access but does not encrypt the flake source after checkout; Nix copies input source files into the local Nix store during evaluation. The plain U2F mapping contains a credential handle and public key rather than the authenticator’s private key, but it still reveals identity and device metadata and should remain private.
-
-The private input requires an authenticated Nix fetch. Do not place an access token in `flake.nix`, `nix.conf` managed by this repository, or the private source repository itself. With an authenticated GitHub CLI session, update and prefetch the input as the unprivileged user:
-
-```sh
-export NIX_CONFIG="access-tokens = github.com=$(gh auth token)"
-nix flake lock --update-input secrets
-nix flake archive
-unset NIX_CONFIG
-```
-
-After changing the private repository, repeat those commands before rebuilding. If root cannot authenticate to the private input, evaluate and build as the authenticated user, then switch the already-built system closure:
-
-```sh
-export NIX_CONFIG="access-tokens = github.com=$(gh auth token)"
-nix build .#nixosConfigurations.smunix.config.system.build.toplevel
-unset NIX_CONFIG
-sudo ./result/bin/switch-to-configuration switch
-```
