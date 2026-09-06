@@ -300,18 +300,18 @@
     "secrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1788649761,
-        "narHash": "sha256-U4u2o7o7VNbyGQTFNL3uKkP/Zt4kqqVtJGV0tZk932I=",
+        "lastModified": 1788692253,
+        "narHash": "sha256-8iCqelhoMVYEiweI/w/+nqKQivT/T73cgZ7bdv/rZxw=",
         "ref": "refs/heads/main",
-        "rev": "48c3e517bcf614c70a599e225a86cf4a2598dbfc",
+        "rev": "5721252601a3ffa38d2e1227d31bd676aa3865ad",
         "shallow": true,
         "type": "git",
-        "url": "ssh://git@github.com/smunix/secrets"
+        "url": "ssh://git@github.com/smunix/nix-secrets"
       },
       "original": {
         "shallow": true,
         "type": "git",
-        "url": "ssh://git@github.com/smunix/secrets"
+        "url": "ssh://git@github.com/smunix/nix-secrets"
       }
     },
     "soulver-cpp": {

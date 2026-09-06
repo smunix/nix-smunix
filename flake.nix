@@ -6,7 +6,7 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
     secrets = {
-      url = "git+ssh://git@github.com/smunix/secrets?shallow=1";
+      url = "git+ssh://git@github.com/smunix/nix-secrets?shallow=1";
       flake = false;
     };
 
