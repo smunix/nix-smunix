@@ -30,12 +30,15 @@ input {
 
 layout {
     gaps 8
-    center-focused-column "never"
+    center-focused-column "on-overflow"
+    always-center-single-column
 
+    // Resolution-independent widths suited to a widescreen display.
     preset-column-widths {
         proportion 0.333333
         proportion 0.5
         proportion 0.666667
+        proportion 1.0
     }
 
     default-column-width { proportion 0.5; }
@@ -65,11 +68,12 @@ window-rule {
     clip-to-geometry true
 }
 
-// Normal applications fill the usable area and default to the dumpster.
-// Later application-specific rules override this workspace destination.
+// Unmatched applications fill the usable area and default to the dumpster.
+// Later application-specific rules override both destination and column width.
 window-rule {
     exclude app-id=r#"(?i)^dev\.noctalia\.Noctalia$"#
     open-maximized true
+    default-column-width { proportion 1.0; }
     open-on-workspace "dumpster"
 }
 
@@ -82,33 +86,46 @@ window-rule {
     default-window-height { fixed 920; }
 }
 
+// Widescreen auto-tiling: routed applications override the full-width fallback.
 window-rule {
     match app-id=r#"(?i)^(org\.wezfurlong\.wezterm|wezterm|com\.mitchellh\.ghostty|ghostty|xterm)$"#
+    open-maximized false
+    default-column-width { proportion 0.5; }
     open-on-workspace "shell"
 }
 
 window-rule {
     match app-id=r#"(?i)^(firefox|org\.mozilla\.firefox|brave-browser|com\.brave\.browser)$"#
+    open-maximized false
+    default-column-width { proportion 0.666667; }
     open-on-workspace "internet"
 }
 
 window-rule {
     match app-id=r#"(?i)^(org\.kde\.okular|okular|org\.gnome\.evince|evince|org\.pwmt\.zathura|zathura|io\.mpv\.Mpv|mpv|xpdf)$"#
+    open-maximized false
+    default-column-width { proportion 0.5; }
     open-on-workspace "viewers"
 }
 
 window-rule {
     match app-id=r#"(?i)^(dev\.zed\.Zed|zed|zeditor)$"#
+    open-maximized false
+    default-column-width { proportion 0.666667; }
     open-on-workspace "programming"
 }
 
 window-rule {
     match app-id=r#"(?i)^(org\.kde\.dolphin|dolphin)$"#
+    open-maximized false
+    default-column-width { proportion 0.333333; }
     open-on-workspace "explorers"
 }
 
 window-rule {
     match app-id=r#"(?i)^(discord|signal|signal-desktop)$"#
+    open-maximized false
+    default-column-width { proportion 0.5; }
     open-on-workspace "chats"
 }
 
@@ -236,6 +253,7 @@ binds {
     Mod+Comma { consume-window-into-column; }
     Mod+Period { expel-window-from-column; }
     Mod+R { switch-preset-column-width; }
+    Mod+W { toggle-column-tabbed-display; }
     Mod+Shift+R { switch-preset-window-height; }
     Mod+Ctrl+R { reset-window-height; }
     Mod+F { maximize-column; }

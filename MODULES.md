@@ -19,7 +19,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Module | Option | Responsibility |
 |---|---|---|
 | Plasma | `modules.desktop.plasma.enable` | Enables Plasma 6 and SDDM, preserving a standard graphical login and desktop session. |
-| Niri and Noctalia | `modules.desktop.niri.enable` | Adds an SDDM-selectable Niri session with Noctalia’s desktop shell, seven persistent named workspaces, application-to-workspace rules, a `dumpster` fallback for unmatched applications, and maximized opening for normal application windows. It also owns the stable compositor, Xwayland Satellite, portals, keyring, desktop helpers, fonts, icons, cursor, and managed KDL/TOML configuration. |
+| Niri and Noctalia | `modules.desktop.niri.enable` | Adds an SDDM-selectable Niri session with Noctalia’s desktop shell, seven persistent named workspaces, application-to-workspace rules, a full-width `dumpster` fallback for unmatched applications, widescreen column proportions for routed applications, and a tabbed-column toggle. It also owns the stable compositor, Xwayland Satellite, portals, keyring, desktop helpers, fonts, icons, cursor, and managed KDL/TOML configuration. |
 | Terminal selector | `modules.desktop.terminal.default` | Selects Ghostty or WezTerm and exports `TERMINAL` through system and Home Manager session environments. |
 | Ghostty | `modules.desktop.terminal.ghostty.enable` | Installs Ghostty with the reference-style Maple Mono font, translucent dark palette, and Nushell startup command. |
 | WezTerm | `modules.desktop.terminal.wezterm.enable` | Installs WezTerm independently as an alternative and starts Nushell by default. |

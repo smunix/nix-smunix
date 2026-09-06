@@ -141,7 +141,7 @@ Both Plasma and Niri are enabled as independent sessions in SDDM. At the login s
 
 The Niri session uses Noctalia as its complete desktop shell. Noctalia owns the rounded top bar, application launcher, clipboard history, notifications, lock screen, OSD, control center, session menu, wallpaper, weather, media controls, and desktop clock/weather/media widgets. The visual profile uses wallpaper-derived dark colors, Maple Mono NF CN, Papirus icons, a Bibata cursor, and the included café wallpaper. Ghostty is styled with a translucent dark palette and starts Nushell with Starship.
 
-Normal application windows open maximized to Niri’s usable workspace area. Noctalia’s own settings window is exempt and remains floating. The persistent named workspaces route applications as follows:
+Niri uses resolution-independent widescreen column proportions. Shell, viewer, and chat applications open at one-half width; browsers and Zed open at two-thirds width; Dolphin opens at one-third width. Unmatched applications retain the full-width fallback in `dumpster`, while Noctalia’s settings window remains floating. A single column is centered, and focused columns are centered only when the visible layout overflows. The persistent named workspaces route applications as follows:
 
 | Shortcut | Workspace | Applications |
 |---|---|---|
@@ -155,7 +155,7 @@ Normal application windows open maximized to Niri’s usable workspace area. Noc
 
 The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular, Evince, and Zathura are installed as the graphical document viewers; MPV is installed for media playback. TDF is enabled independently as a terminal PDF viewer; run `tdf document.pdf` from Ghostty, WezTerm, or XTerm.
 
-Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace. Other desktop controls include `Super+Return` for Ghostty, `Super+D` or `Super+Space` for the launcher, `Super+S` for Control Center, `Super+E` for the session menu, `Super+Shift+V` for clipboard history, `Super+Shift+W` for wallpapers, `Super+Shift+,` for settings, `Super+Shift+D` for desktop-widget editing, `Ctrl+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
+Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace. `Super+W` toggles the focused column between normal and tabbed display, while `Super+R` cycles through one-third, one-half, two-thirds, and full-width presets. Other desktop controls include `Super+Return` for Ghostty, `Super+D` or `Super+Space` for the launcher, `Super+S` for Control Center, `Super+E` for the session menu, `Super+Shift+V` for clipboard history, `Super+Shift+W` for wallpapers, `Super+Shift+,` for settings, `Super+Shift+D` for desktop-widget editing, `Ctrl+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
 
 The compact-font feature reduces the configured Noctalia, GTK, Qt, KDE, X11, Ghostty, WezTerm, and Zed font baselines by 15%. Application-specific document or web-page zoom remains controlled by the application.
 
