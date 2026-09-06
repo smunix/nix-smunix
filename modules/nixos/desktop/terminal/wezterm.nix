@@ -14,7 +14,7 @@ in {
     hm.programs.wezterm = {
       enable = true;
       settings = {
-        font_size = 11.05;
+        font_size = 13.0 * config.modules.desktop.fonts.compact.factor;
         default_prog = [
           "${pkgs.nushell}/bin/nu"
           "--login"

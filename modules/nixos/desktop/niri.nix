@@ -9,11 +9,13 @@
   cfg = config.modules.desktop.niri;
   niriPackages = inputs.niri.packages.${system};
   noctaliaPackage = inputs.noctalia.packages.${system}.default;
+  fontScale = config.modules.desktop.fonts.compact.factor;
+  qtFontSize = 10.0 * fontScale;
   wallpaperDirectory = "${config.user.home}/Pictures/Wallpapers";
   wallpaper = "${wallpaperDirectory}/anime-girls_tea.jpg";
   noctaliaSettings = import ./niri/_noctalia-settings.nix {
     homeDirectory = config.user.home;
-    inherit wallpaper wallpaperDirectory;
+    inherit fontScale wallpaper wallpaperDirectory;
   };
 in {
   imports = [inputs.noctalia.nixosModules.default];
@@ -141,8 +143,8 @@ in {
           style=Fusion
 
           [Fonts]
-          fixed="Maple Mono NF CN,8.5,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
-          general="Maple Mono NF CN,8.5,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+          fixed="Maple Mono NF CN,${toString qtFontSize},-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
+          general="Maple Mono NF CN,${toString qtFontSize},-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular"
 
           [Interface]
           activate_item_on_single_click=1

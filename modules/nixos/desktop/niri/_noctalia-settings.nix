@@ -1,9 +1,10 @@
 {
+  fontScale,
   homeDirectory,
   wallpaper,
   wallpaperDirectory,
 }: {
-  accessibility.ui_scale = 0.85;
+  accessibility.ui_scale = fontScale;
 
   theme = {
     mode = "dark";
@@ -100,7 +101,7 @@
       padding = 2;
       widget_spacing = 6;
       scale = 1.0;
-      font_scale = 0.85;
+      font_scale = fontScale;
       font_weight = 600;
       font_family = "Maple Mono NF CN";
       capsule = true;
@@ -234,7 +235,7 @@
       max_label_chars = 12;
       labels_only_when_occupied = false;
       hide_when_empty = false;
-      pill_scale = 0.85;
+      pill_scale = fontScale;
       active_pill_size = 2.2;
       inactive_pill_size = 1.0;
       focused_color = "primary";

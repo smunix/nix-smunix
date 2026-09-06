@@ -18,7 +18,7 @@ in {
       settings = {
         theme = "smunix-noctalia";
         font-family = "Maple Mono NF CN";
-        font-size = 11.05;
+        font-size = 13.0 * config.modules.desktop.fonts.compact.factor;
         window-decoration = false;
         background-opacity = 0.93;
         copy-on-select = "clipboard";

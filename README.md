@@ -92,7 +92,10 @@ modules = {
       discord.enable = true;
       signal.enable = true;
     };
-    fonts.compact.enable = true;
+    fonts.compact = {
+      enable = true;
+      reduction = 20;
+    };
     viewers = {
       mpv.enable = true;
       tdf.enable = true;
@@ -295,7 +298,7 @@ These hardware keys continue working while the session is locked.
 | `Mod+Shift+E` | Exit Niri. |
 | `Ctrl+Alt+Delete` | Toggle the Noctalia session menu. |
 
-The compact-font feature reduces the configured Noctalia, GTK, Qt, KDE, X11, Ghostty, WezTerm, and Zed font baselines by 15%. Application-specific document or web-page zoom remains controlled by the application.
+The compact-font feature provides a shared reduction percentage so desktop toolkits and individual applications do not drift to different scales. `modules.desktop.fonts.compact.reduction` accepts `5`, `10`, `15`, `20`, `25`, `30`, or `35`; `smunix` selects **20%**. The derived factor is applied to Noctalia, GTK, Qt, KDE, X11, Ghostty, WezTerm, and Zed. Application-specific document or web-page zoom remains controlled by the application.
 
 ## Common commands
 

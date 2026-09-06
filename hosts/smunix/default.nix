@@ -80,7 +80,10 @@
         discord.enable = true;
         signal.enable = true;
       };
-      fonts.compact.enable = true;
+      fonts.compact = {
+        enable = true;
+        reduction = 25;
+      };
       viewers = {
         mpv.enable = true;
         tdf.enable = true;
