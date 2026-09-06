@@ -155,7 +155,127 @@ Niri uses resolution-independent widescreen column proportions. Shell, viewer, a
 
 The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular, Evince, and Zathura are installed as the graphical document viewers; MPV is installed for media playback. TDF is enabled independently as a terminal PDF viewer; run `tdf document.pdf` from Ghostty, WezTerm, or XTerm.
 
-Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace. `Super+W` toggles the focused column between normal and tabbed display, while `Super+R` cycles through one-third, one-half, two-thirds, and full-width presets. Other desktop controls include `Super+Return` for Ghostty, `Super+D` or `Super+Space` for the launcher, `Super+S` for Control Center, `Super+E` for the session menu, `Super+Shift+V` for clipboard history, `Super+Shift+W` for wallpapers, `Super+Shift+,` for settings, `Super+Shift+D` for desktop-widget editing, `Ctrl+Alt+L` to lock, and `Super+Shift+E` to exit Niri. The complete key map is stored in `modules/nixos/desktop/niri/config.kdl`.
+Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace.
+
+## Niri keybinding reference
+
+Niri is operated primarily through compositor shortcuts, so this reference mirrors every active binding in `modules/nixos/desktop/niri/config.kdl`. **`Mod` means the Super/Windows key.** Where both arrow keys and `H`, `J`, `K`, or `L` are shown, either form performs the same action.
+
+> Press `Mod+Shift+/` at any time to show Niri’s built-in hotkey overlay.
+
+### Applications and Noctalia
+
+| Keys | Action |
+|---|---|
+| `Mod+Return` | Open Ghostty. |
+| `Mod+D`, `Mod+Space`, or `XF86Search` | Toggle the Noctalia application launcher. |
+| `Mod+Shift+V` | Toggle clipboard history. |
+| `Mod+C` | Open the launcher in calculator mode. |
+| `Mod+S` | Toggle Control Center. |
+| `Mod+E` | Toggle the session menu. |
+| `Mod+Shift+W` | Toggle the wallpaper picker. |
+| `Mod+Shift+,` | Toggle Noctalia settings. |
+| `Mod+Shift+D` | Toggle desktop-widget editing. |
+| `Alt+Tab` | Open the Noctalia window switcher. |
+| `Ctrl+Alt+L` or `Super+Alt+L` | Lock the session. |
+
+### Audio, media, and brightness
+
+These hardware keys continue working while the session is locked.
+
+| Keys | Action |
+|---|---|
+| `XF86AudioRaiseVolume` | Increase output volume. |
+| `XF86AudioLowerVolume` | Decrease output volume. |
+| `XF86AudioMute` | Toggle output mute. |
+| `XF86AudioMicMute` | Toggle microphone mute. |
+| `XF86AudioPlay` | Toggle media playback. |
+| `XF86AudioStop` | Stop media playback. |
+| `XF86AudioPrev` | Play the previous media item. |
+| `XF86AudioNext` | Play the next media item. |
+| `XF86MonBrightnessUp` | Increase display brightness. |
+| `XF86MonBrightnessDown` | Decrease display brightness. |
+
+### Window, column, and monitor navigation
+
+| Keys | Action |
+|---|---|
+| `Mod+Left` or `Mod+H` | Focus the column to the left. |
+| `Mod+Right` or `Mod+L` | Focus the column to the right. |
+| `Mod+Up` or `Mod+K` | Focus the window above in the current column. |
+| `Mod+Down` or `Mod+J` | Focus the window below in the current column. |
+| `Mod+Ctrl+Left` or `Mod+Ctrl+H` | Move the focused column left. |
+| `Mod+Ctrl+Right` or `Mod+Ctrl+L` | Move the focused column right. |
+| `Mod+Ctrl+Up` or `Mod+Ctrl+K` | Move the focused window up within its column. |
+| `Mod+Ctrl+Down` or `Mod+Ctrl+J` | Move the focused window down within its column. |
+| `Mod+Shift+Left` or `Mod+Shift+H` | Focus the monitor to the left. |
+| `Mod+Shift+Right` or `Mod+Shift+L` | Focus the monitor to the right. |
+| `Mod+Shift+Up` or `Mod+Shift+K` | Focus the monitor above. |
+| `Mod+Shift+Down` or `Mod+Shift+J` | Focus the monitor below. |
+| `Mod+Ctrl+Shift+Left` or `Mod+Ctrl+Shift+H` | Move the focused column to the monitor on the left. |
+| `Mod+Ctrl+Shift+Right` or `Mod+Ctrl+Shift+L` | Move the focused column to the monitor on the right. |
+| `Mod+Ctrl+Shift+Up` or `Mod+Ctrl+Shift+K` | Move the focused column to the monitor above. |
+| `Mod+Ctrl+Shift+Down` or `Mod+Ctrl+Shift+J` | Move the focused column to the monitor below. |
+
+### Workspace navigation
+
+| Keys | Action |
+|---|---|
+| `Mod+Page Up` or `Mod+I` | Focus the previous workspace. |
+| `Mod+Page Down` or `Mod+U` | Focus the next workspace. |
+| `Mod+Ctrl+Page Up` or `Mod+Ctrl+I` | Move the focused column to the previous workspace. |
+| `Mod+Ctrl+Page Down` or `Mod+Ctrl+U` | Move the focused column to the next workspace. |
+| `Mod+Shift+Page Up` or `Mod+Shift+I` | Move the current workspace up. |
+| `Mod+Shift+Page Down` or `Mod+Shift+U` | Move the current workspace down. |
+| `Mod+mouse wheel up` | Focus the previous workspace. |
+| `Mod+mouse wheel down` | Focus the next workspace. |
+| `Mod+Ctrl+mouse wheel up` | Move the focused column to the previous workspace. |
+| `Mod+Ctrl+mouse wheel down` | Move the focused column to the next workspace. |
+
+### Named workspaces
+
+| Focus | Move focused column | Workspace |
+|---|---|---|
+| `Mod+1` | `Mod+Ctrl+1` | `shell` |
+| `Mod+2` | `Mod+Ctrl+2` | `internet` |
+| `Mod+3` | `Mod+Ctrl+3` | `viewers` |
+| `Mod+4` | `Mod+Ctrl+4` | `programming` |
+| `Mod+5` | `Mod+Ctrl+5` | `explorers` |
+| `Mod+6` | `Mod+Ctrl+6` | `chats` |
+| `Mod+7` | `Mod+Ctrl+7` | `dumpster` |
+
+### Layout, columns, and tabs
+
+| Keys | Action |
+|---|---|
+| `Mod+[` | Consume or expel the focused window toward the left column. |
+| `Mod+]` | Consume or expel the focused window toward the right column. |
+| `Mod+,` | Consume the focused window into the neighboring column. |
+| `Mod+.` | Expel the focused window from its column. |
+| `Mod+R` | Cycle the focused column through one-third, one-half, two-thirds, and full-width presets. |
+| `Mod+W` | Toggle the focused column between normal and tabbed display. |
+| `Mod+Shift+R` | Cycle the focused window through preset heights. |
+| `Mod+Ctrl+R` | Reset the focused window’s height. |
+| `Mod+F` | Toggle maximization of the focused column. |
+| `Mod+Shift+F` | Toggle fullscreen for the focused window. |
+| `Mod+V` | Toggle the focused window between tiled and floating layouts. |
+| `Mod+Ctrl+F` | Expand the focused column into the currently available width. |
+| `Mod+Ctrl+C` | Center all visible columns. |
+| `Mod+-` or `Mod+=` | Decrease or increase the focused column width by 10%. |
+| `Mod+Shift+-` or `Mod+Shift+=` | Decrease or increase the focused window height by 10%. |
+
+### Screenshots and session controls
+
+| Keys | Action |
+|---|---|
+| `Print` | Capture an interactively selected region through Noctalia. |
+| `Ctrl+Print` | Capture the entire screen through Noctalia. |
+| `Alt+Print` | Capture the focused window through Niri. |
+| `Mod+Escape` | Toggle whether the focused application may inhibit compositor shortcuts. |
+| `Mod+Q` | Close the focused window. |
+| `Mod+Shift+P` | Turn off the displays. |
+| `Mod+Shift+E` | Exit Niri. |
+| `Ctrl+Alt+Delete` | Toggle the Noctalia session menu. |
 
 The compact-font feature reduces the configured Noctalia, GTK, Qt, KDE, X11, Ghostty, WezTerm, and Zed font baselines by 15%. Application-specific document or web-page zoom remains controlled by the application.
 
