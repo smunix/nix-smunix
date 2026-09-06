@@ -163,6 +163,24 @@ Niri is operated primarily through compositor shortcuts, so this reference mirro
 
 > Press `Mod+Shift+/` at any time to show Niri’s built-in hotkey overlay.
 
+### Working with tabbed columns
+
+Tabbed mode changes how multiple windows in the **same column** are displayed; it does not create a separate workspace or namespace. The important distinction is that vertical navigation switches windows inside the column, while horizontal navigation switches between columns.
+
+| Task | Keys | Result |
+|---|---|---|
+| Add a window to a column | `Mod+,` | Consume the focused window into a neighboring column so the windows can form a stack. |
+| Toggle tabbed mode | `Mod+W` | Switch the focused column between normal stacked display and tabbed display. |
+| Select the next tab | `Mod+J` or `Mod+Down` | Focus the next window in the current column. |
+| Select the previous tab | `Mod+K` or `Mod+Up` | Focus the previous window in the current column. |
+| Reorder a tab downward | `Mod+Ctrl+J` or `Mod+Ctrl+Down` | Move the focused window down within the current column. |
+| Reorder a tab upward | `Mod+Ctrl+K` or `Mod+Ctrl+Up` | Move the focused window up within the current column. |
+| Move to another column | `Mod+H`/`Mod+Left` or `Mod+L`/`Mod+Right` | Focus the column to the left or right rather than changing tabs. |
+| Remove a window from the stack | `Mod+.` | Expel the focused window into its own column. |
+| Consume or expel by direction | `Mod+[` or `Mod+]` | Consume or expel the focused window toward the left or right column. |
+
+A practical sequence is to place the desired windows on one workspace, use `Mod+,` to combine them into one column, press `Mod+W` to show that column as tabs, and then use `Mod+J` and `Mod+K` to switch between those windows.
+
 ### Applications and Noctalia
 
 | Keys | Action |
