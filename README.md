@@ -446,16 +446,31 @@ kimi
 
 The expected modes are `700` for `~/.kimi-code` and `600` for `config.toml`.
 
-### Rotating the Kimi API key
+### Rotating the Kimi Code key
 
-Create the replacement TOML in a private temporary file. The example value below is deliberately fake:
+The managed Kimi Code configuration uses the OAuth-style **`key`** fields from the complete exported configuration, not the legacy `api_key` fields. Keep every `api_key` value empty and place the same replacement credential in each of these three `key` fields. The values below are deliberately fake:
 
 ```toml
-[providers.moonshot]
-api_key = "mock_api_key_never_commit_a_real_value"
+[providers."managed:kimi-code"]
+api_key = ""
+
+[providers."managed:kimi-code".oauth]
+key = "mock_kimi_key_never_commit_a_real_value"
+
+[services.moonshot_fetch]
+api_key = ""
+
+[services.moonshot_fetch.oauth]
+key = "mock_kimi_key_never_commit_a_real_value"
+
+[services.moonshot_search]
+api_key = ""
+
+[services.moonshot_search.oauth]
+key = "mock_kimi_key_never_commit_a_real_value"
 ```
 
-Use a restrictive umask, encrypt the complete file to every public key in `.age-recipients`, verify that the current private identity can decrypt the result, and securely remove temporary plaintext:
+Edit the **complete** configuration rather than replacing it with only this excerpt, because the file also defines models, capabilities, service endpoints, and the default model. Use a restrictive umask, encrypt the complete file to every public key in `.age-recipients`, verify that the current private identity can decrypt the result, and securely remove temporary plaintext:
 
 ```sh
 cd ~/src/nix-secrets

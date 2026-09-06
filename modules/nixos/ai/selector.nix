@@ -36,9 +36,27 @@
       exit 1
     fi
 
-    if ! ${pkgs.gnugrep}/bin/grep -Eq '^\[providers\.moonshot\]$' "$temporaryFile" \
-      || ! ${pkgs.gnugrep}/bin/grep -Eq '^api_key[[:space:]]*=[[:space:]]*".+"$' "$temporaryFile"; then
-      echo "The decrypted Kimi Code configuration has an unexpected format." >&2
+    emptyApiKeyCount="$(${pkgs.gnugrep}/bin/grep -Ec '^[[:space:]]*api_key[[:space:]]*=[[:space:]]*""[[:space:]]*$' "$temporaryFile" || true)"
+
+    if ! ${pkgs.gnugrep}/bin/grep -Eq '^[[:space:]]*default_model[[:space:]]*=[[:space:]]*".+"[[:space:]]*$' "$temporaryFile" \
+      || [ "$emptyApiKeyCount" -ne 3 ] \
+      || ! ${pkgs.gawk}/bin/awk '
+        /^[[:space:]]*key[[:space:]]*=[[:space:]]*".+"[[:space:]]*$/ {
+          value = $0
+          sub(/^[^"]*"/, "", value)
+          sub(/"[[:space:]]*$/, "", value)
+          if (count == 0) {
+            first = value
+          } else if (value != first) {
+            mismatch = 1
+          }
+          count++
+        }
+        END {
+          exit !(count == 3 && mismatch == 0)
+        }
+      ' "$temporaryFile"; then
+      echo "The decrypted Kimi Code configuration must use three matching non-empty key fields and three empty api_key fields." >&2
       exit 1
     fi
 
