@@ -10,6 +10,6 @@ in {
     lib.mkEnableOption "TDF terminal PDF viewer";
 
   config = lib.mkIf cfg.enable {
-    user.packages = [pkgs.tdf];
+    user.packages = with pkgs; [ poppler-utils tdf ];
   };
 }
