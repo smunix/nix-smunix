@@ -128,7 +128,7 @@ The `tlp` power backend disables the conflicting power-profiles daemon, enables 
 
 The command-line utility groups install `ack`, `ripgrep`, and `fd` through `modules.programs.cli.search`, and `coreutils` plus `pciutils` through `modules.programs.cli.system`.
 
-The AI module provides one host-level switch and a typed client selector. Selecting `"kimi"` installs the upstream Kimi Code package exposed as `pkgs.kimi-code` by the repository overlay; run it with `kimi`. The selector currently accepts only Kimi, while its package map and enum provide the extension point for a future Claude Code client.
+The AI module provides one host-level switch and a typed client selector. Selecting `"kimi"` installs the upstream Kimi Code package exposed as `pkgs.kimi-code` by the repository overlay; run it with `kimi`. The selector currently accepts only Kimi, while its package map and enum provide the extension point for a future Claude Code client. For Kimi, the module also decrypts the host-specific age payload from the private input at user-login time and installs `~/.kimi-code/config.toml` with mode `0600`; the plaintext API key never enters the Nix store.
 
 Typst provides the Typst compiler, Tinymist language server, and Typstyle formatter. Quarto remains available as an opt-in publishing feature through `modules.develop.quarto.enable`.
 
@@ -381,10 +381,14 @@ The non-flake `secrets` input points to a private repository and expects this la
 ```text
 hosts/
 └── smunix/
+    ├── apps/
+    │   └── kimi-code/
+    │       └── config.toml.age
     ├── security/
     │   └── u2f_keys
     └── sops/
         └── example.yaml
+.age-recipients
 .sops.yaml
 ```
 
@@ -395,7 +399,24 @@ The U2F mapping uses one user per line. The following values are deliberately fa
 <username>:<first-handle>,<first-public-key>,es256,+presence:<second-handle>,<second-public-key>,es256,+presence
 ```
 
-Future confidential values must be committed only in encrypted form. A mock encrypted SOPS document has this shape:
+Application credentials must be committed only as encrypted payloads. For Kimi Code, create this complete TOML outside both repositories using mock values during documentation or testing:
+
+```toml
+[providers.moonshot]
+api_key = "mock_api_key_never_commit_a_real_value"
+```
+
+Encrypt the complete file to every SSH public key listed in `.age-recipients`:
+
+```sh
+age -R /path/to/nix-secrets/.age-recipients \
+  -o /path/to/nix-secrets/hosts/smunix/apps/kimi-code/config.toml.age \
+  /secure/temporary/config.toml
+```
+
+Securely delete the plaintext after encryption, commit only `config.toml.age`, push the private repository, and update the `secrets` flake lock. The `kimi-code-config` Home Manager user service tries `~/.ssh/id_ed25519`, `~/.ssh/id_ed25519_sk`, and `~/.ssh/id_rsa` in that order. A matching private key decrypts the payload directly into `~/.kimi-code/config.toml` with mode `0600`. Run `systemctl --user start kimi-code-config.service` to materialize or refresh the file immediately.
+
+SOPS-encrypted documents remain available for future structured secrets. A mock encrypted SOPS document has this shape:
 
 ```yaml
 service:
@@ -410,7 +431,7 @@ sops:
   version: 3.9.0
 ```
 
-Do not commit passwords, API tokens, recovery codes, private SSH keys, age identity files, unencrypted environment files, or decrypted SOPS output. A private repository controls remote access but does not encrypt the flake source after checkout; Nix copies input source files into the local Nix store during evaluation. The plain U2F mapping contains a credential handle and public key rather than the authenticator’s private key, but it still reveals identity and device metadata and should remain private.
+Do not commit passwords, API tokens, recovery codes, private SSH keys, age identity files, unencrypted application configurations, environment files, or decrypted SOPS output. A private repository controls remote access but does not encrypt the flake source after checkout; Nix copies input source files into the local Nix store during evaluation. The plain U2F mapping contains a credential handle and public key rather than the authenticator’s private key, but it still reveals identity and device metadata and should remain private.
 
 The private input requires an authenticated Nix fetch. Do not place an access token in `flake.nix`, `nix.conf` managed by this repository, or the private source repository itself. With an authenticated GitHub CLI session, update and prefetch the input as the unprivileged user:
 

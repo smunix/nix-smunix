@@ -44,6 +44,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Module | Option | Responsibility |
 |---|---|---|
 | AI client selector | `modules.ai.enable`, `.client` | Installs the selected AI coding client through one host-level interface. The initial `"kimi"` choice maps to `pkgs.kimi-code`; the enum and package map are the extension points for future clients such as Claude Code. |
+| Kimi credentials | `modules.ai.kimi.encryptedConfig`, `.identityPaths` | Uses age and the first matching user SSH identity to decrypt the host-specific private-input payload at login, then atomically installs `~/.kimi-code/config.toml` with mode `0600` without placing plaintext in the Nix store. |
 
 ## Development, shell, and version-control features
 
@@ -84,7 +85,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | flake-parts entry point | `flake.nix` | Declares inputs and delegates output composition to flake-parts. |
 | Top-level flake outputs | `parts/flake.nix` | Exports the helper library, overlays, recursive NixOS and Home Manager module trees, and discovered NixOS hosts. |
 | Per-system outputs | `parts/per-system.nix` | Defines packages and the Alejandra formatter for supported systems. |
-| Private source input | `inputs.secrets` | Supplies host-specific U2F mappings and future encrypted payloads as a pinned non-flake input. |
+| Private source input | `inputs.secrets` | Supplies host-specific U2F mappings and age-encrypted application payloads as a pinned non-flake input. The Kimi ciphertext resides at `hosts/smunix/apps/kimi-code/config.toml.age`. |
 | Kimi Code input | `inputs.kimi-code` | Supplies the upstream system-specific Kimi Code package while retaining its own pinned build toolchain. |
 | Discovery helpers | `lib/attrs.nix`, `lib/modules.nix`, `lib/nixos.nix` | Provide attribute helpers, filesystem-based module discovery, and automatic host construction. |
 | Custom package overlay | `overlays/additions.nix` | Extension point for locally packaged additions. |
