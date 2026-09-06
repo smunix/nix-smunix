@@ -13,6 +13,11 @@
   };
 
   modules = {
+    ai = {
+      enable = true;
+      client = "kimi";
+    };
+
     networking.networkManager.enable = true;
 
     hardware = {

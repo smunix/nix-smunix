@@ -39,6 +39,12 @@ This document summarizes the reusable modules and composition helpers in this co
 | System utilities | `modules.programs.cli.system.enable` | Installs `coreutils` and `pciutils` as foundational command-line inspection tools. |
 | Waybar | `modules.programs.waybar.enable` | Enables Waybar as a standalone program feature for desktop environments that use it. |
 
+## AI coding clients
+
+| Module | Option | Responsibility |
+|---|---|---|
+| AI client selector | `modules.ai.enable`, `.client` | Installs the selected AI coding client through one host-level interface. The initial `"kimi"` choice maps to `pkgs.kimi-code`; the enum and package map are the extension points for future clients such as Claude Code. |
+
 ## Development, shell, and version-control features
 
 | Module | Option | Responsibility |
@@ -79,12 +85,14 @@ This document summarizes the reusable modules and composition helpers in this co
 | Top-level flake outputs | `parts/flake.nix` | Exports the helper library, overlays, recursive NixOS and Home Manager module trees, and discovered NixOS hosts. |
 | Per-system outputs | `parts/per-system.nix` | Defines packages and the Alejandra formatter for supported systems. |
 | Private source input | `inputs.secrets` | Supplies host-specific U2F mappings and future encrypted payloads as a pinned non-flake input. |
+| Kimi Code input | `inputs.kimi-code` | Supplies the upstream system-specific Kimi Code package while retaining its own pinned build toolchain. |
 | Discovery helpers | `lib/attrs.nix`, `lib/modules.nix`, `lib/nixos.nix` | Provide attribute helpers, filesystem-based module discovery, and automatic host construction. |
 | Custom package overlay | `overlays/additions.nix` | Extension point for locally packaged additions. |
 | Package modification overlay | `overlays/modifications.nix` | Extension point for package overrides. |
 | Unstable package overlay | `overlays/unstable-packages.nix` | Exposes the pinned unstable package set under the configured overlay. |
+| Kimi Code overlay | `overlays/kimi-code.nix` | Exposes the upstream package as `pkgs.kimi-code` to the host module graph. |
 | Custom package set | `pkgs/default.nix` | Extension point for packages exported by this flake. |
 
 ## Feature selection
 
-The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, TLP with UPower telemetry, suspend-on-lid-close behavior, NVIDIA PRIME offload with host-specific PCI IDs, the search and system utility groups, the language toolchains including Typst, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy at a 20 percent reduction, YubiKey U2F authentication with password fallback, systemd-initrd FIDO2 unlocking for encrypted root and swap, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. The separate TDF, Zathura, and MPV viewer modules are enabled for terminal and graphical document or media viewing. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.
+The `smunix` manifest enables Plasma and the Niri/Noctalia desktop, NetworkManager, PipeWire, printing, TLP with UPower telemetry, suspend-on-lid-close behavior, NVIDIA PRIME offload with host-specific PCI IDs, the search and system utility groups, the language toolchains including Typst, Kimi Code through the AI client selector, Nushell, Starship, Zellij, Ghostty as the default terminal, WezTerm as an alternative, Brave, Firefox, Discord, Signal, Git, Jujutsu, Helix, Vim, Zed, the compact-font policy at a 20 percent reduction, YubiKey U2F authentication with password fallback, systemd-initrd FIDO2 unlocking for encrypted root and swap, and the shared Home Manager base/package profiles. Niri additionally supplies XTerm, Okular, Evince, and Dolphin for its routed workspaces. The separate TDF, Zathura, and MPV viewer modules are enabled for terminal and graphical document or media viewing. An Xpdf routing rule is present, but the pinned insecure Xpdf package is intentionally not installed. The standalone Waybar module remains reusable but is not selected because Noctalia owns Niri’s bar.

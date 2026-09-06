@@ -25,6 +25,11 @@ Each NixOS feature owns an option below the `modules` namespace. The `smunix` ho
 
 ```nix
 modules = {
+  ai = {
+    enable = true;
+    client = "kimi";
+  };
+
   networking.networkManager.enable = true;
   hardware = {
     pipewire.enable = true;
@@ -122,6 +127,8 @@ modules = {
 The `tlp` power backend disables the conflicting power-profiles daemon, enables TLP’s compatible profile service, keeps UPower available for battery telemetry and desktop integration, applies the 75–80% charge window, and suspends on lid closure except while docked. The NVIDIA PRIME PCI bus IDs remain values in the `smunix` host manifest rather than reusable module defaults.
 
 The command-line utility groups install `ack`, `ripgrep`, and `fd` through `modules.programs.cli.search`, and `coreutils` plus `pciutils` through `modules.programs.cli.system`.
+
+The AI module provides one host-level switch and a typed client selector. Selecting `"kimi"` installs the upstream Kimi Code package exposed as `pkgs.kimi-code` by the repository overlay; run it with `kimi`. The selector currently accepts only Kimi, while its package map and enum provide the extension point for a future Claude Code client.
 
 Typst provides the Typst compiler, Tinymist language server, and Typstyle formatter. Quarto remains available as an opt-in publishing feature through `modules.develop.quarto.enable`.
 

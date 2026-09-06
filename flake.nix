@@ -22,6 +22,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    kimi-code.url = "github:MoonshotAI/kimi-code";
+
     vicinae.url = "github:vicinaehq/vicinae";
 
     noctalia = {
