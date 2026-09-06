@@ -302,15 +302,16 @@
       "locked": {
         "lastModified": 1788649761,
         "narHash": "sha256-U4u2o7o7VNbyGQTFNL3uKkP/Zt4kqqVtJGV0tZk932I=",
-        "owner": "smunix",
-        "repo": "secrets",
+        "ref": "refs/heads/main",
         "rev": "48c3e517bcf614c70a599e225a86cf4a2598dbfc",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/smunix/secrets"
       },
       "original": {
-        "owner": "smunix",
-        "repo": "secrets",
-        "type": "github"
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/smunix/secrets"
       }
     },
     "soulver-cpp": {
