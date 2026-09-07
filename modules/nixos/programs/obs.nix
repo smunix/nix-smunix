@@ -37,10 +37,13 @@ in {
         plugins = optional cfg.ndi.enable pkgs.obs-studio-plugins.obs-ndi;
       };
 
-      user.extraGroups = mkAfter [
-        "video"
-        "render"
-      ];
+      user = {
+        packages = [pkgs.v4l-utils];
+        extraGroups = mkAfter [
+          "video"
+          "render"
+        ];
+      };
     }
 
     (mkIf cfg.virtualCamera.enable {
