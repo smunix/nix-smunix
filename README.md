@@ -116,6 +116,11 @@ modules = {
 
   programs = {
     firefox.enable = true;
+    obs = {
+      enable = true;
+      ndi.enable = true;
+      virtualCamera.enable = true;
+    };
     cli = {
       search.enable = true;
       system.enable = true;
@@ -127,6 +132,8 @@ modules = {
 The `tlp` power backend disables the conflicting power-profiles daemon, enables TLP’s compatible profile service, keeps UPower available for battery telemetry and desktop integration, applies the 75–80% charge window, and suspends on lid closure except while docked. The NVIDIA PRIME PCI bus IDs remain values in the `smunix` host manifest rather than reusable module defaults.
 
 The command-line utility groups install `ack`, `ripgrep`, and `fd` through `modules.programs.cli.search`, and `coreutils` plus `pciutils` through `modules.programs.cli.system`.
+
+The OBS module installs OBS Studio through NixOS's native wrapper. Enabling `modules.programs.obs.ndi` adds `pkgs.obs-studio-plugins.obs-ndi`, a compatibility alias for DistroAV—the plugin currently described by nixpkgs as formerly `obs-ndi`. DistroAV links the proprietary `ndi-6` SDK, so the repository's host package set must continue allowing unfree packages. Enabling `modules.programs.obs.virtualCamera` configures the `v4l2loopback` kernel module and its `OBS Cam` device. The module also adds the primary user to `video` and `render`; log out and back in after activation so those supplementary groups are present in the session.
 
 The AI module provides one host-level switch and a typed client selector. Selecting `"kimi"` installs the upstream Kimi Code package exposed as `pkgs.kimi-code` by the repository overlay; run it with `kimi`. The selector currently accepts only Kimi, while its package map and enum provide the extension point for a future Claude Code client. For Kimi, the module also decrypts the host-specific age payload from the private input at user-login time and installs `~/.kimi-code/config.toml` with mode `0600`; the plaintext API key never enters the Nix store.
 

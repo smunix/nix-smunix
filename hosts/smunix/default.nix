@@ -104,6 +104,11 @@
 
     programs = {
       firefox.enable = true;
+      obs = {
+        enable = true;
+        ndi.enable = true;
+        virtualCamera.enable = true;
+      };
       cli = {
         compress.enable = true;
         search.enable = true;
