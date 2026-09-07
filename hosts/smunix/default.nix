@@ -107,7 +107,10 @@
       obs = {
         enable = true;
         ndi.enable = true;
-        virtualCamera.enable = true;
+        virtualCamera = {
+          enable = true;
+          videoNr = 10;
+        };
       };
       cli = {
         compress.enable = true;
