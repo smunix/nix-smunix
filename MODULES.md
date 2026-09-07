@@ -93,7 +93,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Package modification overlay | `overlays/modifications.nix` | Extension point for package overrides. |
 | Unstable package overlay | `overlays/unstable-packages.nix` | Exposes the pinned unstable package set under the configured overlay. |
 | Kimi Code overlay | `overlays/kimi-code.nix` | Exposes the upstream package as `pkgs.kimi-code` to the host module graph. |
-| OBS plugin compatibility overlay | `overlays/obs-plugins.nix` | Exposes current DistroAV as `pkgs.obs-studio-plugins.obs-ndi`, preserving the familiar former plugin name. |
+| OBS and NDI compatibility overlay | `overlays/obs-plugins.nix` | Replaces only the stale `ndi-6` source hash, rebuilds DistroAV against that corrected SDK derivation, and exposes it as `pkgs.obs-studio-plugins.obs-ndi`. |
 | Custom package set | `pkgs/default.nix` | Extension point for packages exported by this flake. |
 
 ## Feature selection
