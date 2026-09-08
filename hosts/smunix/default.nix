@@ -36,6 +36,25 @@
         intelBusId = "PCI:0:2:0";
         nvidiaBusId = "PCI:1:0:0";
       };
+      obsbot = {
+        enable = true;
+        usb.vendorId = "3564";
+        video.deviceSymlink = "obsbot-tail2";
+        audio = {
+          enable = true;
+          sourcePattern = "(obsbot|tail[ _-]?2|3564)";
+          virtualSourceName = "obsbot_dji_mic";
+          sampleRate = 48000;
+          channels = 2;
+          setDefault = true;
+        };
+        obs = {
+          autoStart = true;
+          collection = "Tail 2";
+          profile = "Tail 2";
+          scene = "Tail 2";
+        };
+      };
     };
 
     develop = {
@@ -110,14 +129,6 @@
         virtualCamera = {
           enable = true;
           videoNr = 10;
-        };
-        obsbotAutoStart = {
-          enable = true;
-          vendorId = "3564";
-          deviceSymlink = "obsbot-tail2";
-          collection = "Tail 2";
-          profile = "Tail 2";
-          scene = "Tail 2";
         };
       };
       cli = {

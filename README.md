@@ -79,6 +79,26 @@ modules = {
     };
   };
 
+  hardware.obsbot = {
+    enable = true;
+    usb.vendorId = "3564";
+    video.deviceSymlink = "obsbot-tail2";
+    audio = {
+      enable = true;
+      sourcePattern = "(obsbot|tail[ _-]?2|3564)";
+      virtualSourceName = "obsbot_dji_mic";
+      sampleRate = 48000;
+      channels = 2;
+      setDefault = true;
+    };
+    obs = {
+      autoStart = true;
+      collection = "Tail 2";
+      profile = "Tail 2";
+      scene = "Tail 2";
+    };
+  };
+
   vcs = {
     git.enable = true;
     jujutsu.enable = true;
@@ -123,14 +143,6 @@ modules = {
         enable = true;
         videoNr = 10;
       };
-      obsbotAutoStart = {
-        enable = true;
-        vendorId = "3564";
-        deviceSymlink = "obsbot-tail2";
-        collection = "Tail 2";
-        profile = "Tail 2";
-        scene = "Tail 2";
-      };
     };
     cli = {
       search.enable = true;
@@ -148,11 +160,13 @@ The OBS module installs OBS Studio through NixOS's native wrapper. Enabling `mod
 
 ### OBSBOT Tail 2 automatic startup and DJI Mic 3 audio
 
-The enabled `obsbotAutoStart` feature matches the primary capture-capable Video4Linux interface below OBSBOT USB vendor `3564`, creates the stable `/dev/obsbot-tail2` symlink, and requests the `obsbot-tail2.service` Home Manager user unit. The service waits for the capture node, displays a desktop notification, and launches the wrapped OBS package inside the graphical session with `--startvirtualcam`, `--minimize-to-tray`, and the configured collection, profile, and scene. It also starts at graphical login when the camera was connected before login.
+The dedicated `modules.hardware.obsbot` module owns every Tail 2-specific setting. It matches the primary capture-capable Video4Linux interface below OBSBOT USB vendor `3564`, creates `/dev/obsbot-tail2`, and requests the `obsbot-tail2.service` Home Manager user unit. The UVC product ID remains optional because its value has not yet been recorded; obtain `ID_MODEL_ID` with `udevadm info --query=property --name=/dev/obsbot-tail2` and set `modules.hardware.obsbot.usb.productId` for stricter matching.
 
-Prepare OBS once through its GUI by creating a collection, profile, and scene named `Tail 2`. Add `/dev/obsbot-tail2` as the **Video Capture Device (V4L2)** source. The UVC product ID is optional because its value was not yet recorded; after connecting the Tail 2 in UVC mode, obtain `ID_MODEL_ID` with `udevadm info --query=property --name=/dev/obsbot-tail2` and set `obsbotAutoStart.productId` if stricter matching is desired.
+The user service waits for `/dev/obsbot-tail2`, `/dev/video10`, PipeWire, and the Tail 2 UVC audio endpoint. It locates that endpoint from PipeWire source metadata using `audio.sourcePattern`, creates the stable `obsbot_dji_mic` virtual microphone with `module-remap-source`, and makes it the temporary default source. This maps the DJI Mic 3 signal from the Tail 2 MIC IN path without per-session `pactl` commands. When the service stops, it unloads the virtual source and restores the prior default microphone.
 
-The DJI Mic 3 connected to the Tail 2 MIC IN port is audio, not part of `/dev/video10`. Find the Tail 2/DJI PipeWire source with `wpctl status` or `pactl list short sources`, disable the same microphone under OBS **Settings → Audio** to avoid duplicate global capture, and add it to the `Tail 2` scene as **Audio Capture Device (PulseAudio)**. Use a 48 kHz OBS sample rate when that endpoint supports it. Conferencing applications should select **OBS Cam** for video and the Tail 2/DJI microphone source separately. A separate PipeWire virtual microphone is required only when another application must receive OBS-processed audio.
+Prepare OBS once through its GUI by creating a collection, profile, and scene named `Tail 2`. Add `/dev/obsbot-tail2` as the **Video Capture Device (V4L2)** source. Under **Settings → Audio**, set Mic/Auxiliary Audio to **Default** so the automatically selected `obsbot_dji_mic` source enters the stream; alternatively, add `obsbot_dji_mic` as a scene-level **Audio Capture Device (PulseAudio)** source. Use a 48 kHz OBS sample rate. `/dev/video10` carries video only, while the PipeWire source carries the DJI microphone audio.
+
+After routing is ready, the service starts the saved collection, profile, and scene with `--startvirtualcam`. It verifies that `/dev/video10` becomes capture-capable before considering startup successful. Early OBS exit, missing devices, missing audio, or a virtual-camera readiness timeout causes cleanup and a failed unit state; systemd retries after five seconds, with at most three failed starts in two minutes. Desktop notifications report connection and virtual-camera failure states. The graphical-session dependency also handles a camera connected before login.
 
 The AI module provides one host-level switch and a typed client selector. Selecting `"kimi"` installs the upstream Kimi Code package exposed as `pkgs.kimi-code` by the repository overlay; run it with `kimi`. The selector currently accepts only Kimi, while its package map and enum provide the extension point for a future Claude Code client. For Kimi, the module also decrypts the host-specific age payload from the private input at user-login time and installs `~/.kimi-code/config.toml` with mode `0600`; the plaintext API key never enters the Nix store.
 
