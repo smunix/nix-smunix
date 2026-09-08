@@ -64,6 +64,8 @@ modules = {
   };
 
   security = {
+    fingerprint.enable = true;
+
     yubikey = {
       enable = true;
       origin = "pam://smunix";
@@ -375,6 +377,47 @@ The shared root module configures `home-manager.backupCommand` with a generated 
 ```
 
 The timestamp includes nanoseconds, and the script adds a numeric suffix if the generated destination already exists. Existing backups are never overwritten. This replaces the previous fixed `.backup` extension, so a file such as `~/.gtkrc-2.0.backup` cannot block a later activation.
+
+## Fingerprint authentication
+
+The `smunix` host enables `modules.security.fingerprint`, which activates fprintd and its PAM module. Fingerprints are accepted for interactive SDDM, console login, Plasma and Swaylock unlocking, sudo, su, polkit, and systemd-run0 prompts. Fingerprint authentication is explicitly disabled for password changes, user and group administration, autologin helpers, and other noninteractive PAM services.
+
+The generated PAM order keeps the existing recovery paths: YubiKey U2F is attempted first, fingerprint authentication is attempted next, and the normal password remains available afterward. A fingerprint does not unlock the LUKS volumes during early boot; that remains the responsibility of the enrolled YubiKey FIDO2 token or a LUKS passphrase.
+
+After activating the system configuration, enroll a finger as `smunix` without `sudo`:
+
+```sh
+fprintd-enroll -f right-index-finger
+```
+
+Touch or swipe the requested finger repeatedly until enrollment completes. Valid finger names include `left-thumb`, `left-index-finger`, `right-thumb`, and `right-index-finger`. Enroll additional fingers by repeating the command with another `-f` value.
+
+List and verify the enrolled prints:
+
+```sh
+fprintd-list "$USER"
+fprintd-verify -f right-index-finger
+```
+
+To remove all prints for the current account and start again:
+
+```sh
+fprintd-delete "$USER"
+```
+
+Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.
+
+Keep a root recovery shell open during initial testing. In another terminal, test interactive authentication before logging out:
+
+```sh
+sudo -i
+sudo nixos-rebuild test --flake .#smunix
+fprintd-verify
+sudo -k
+sudo true
+```
+
+Test the fingerprint, YubiKey, and password paths separately. If `fprintd-enroll` reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
 
 ## YubiKey authentication
 

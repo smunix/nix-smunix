@@ -71,6 +71,8 @@
       zellij.enable = true;
     };
     security = {
+      fingerprint.enable = true;
+
       yubikey = {
         enable = true;
         origin = "pam://smunix";
