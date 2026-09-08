@@ -123,6 +123,14 @@ modules = {
         enable = true;
         videoNr = 10;
       };
+      obsbotAutoStart = {
+        enable = true;
+        vendorId = "3564";
+        deviceSymlink = "obsbot-tail2";
+        collection = "Tail 2";
+        profile = "Tail 2";
+        scene = "Tail 2";
+      };
     };
     cli = {
       search.enable = true;
@@ -137,6 +145,14 @@ The `tlp` power backend disables the conflicting power-profiles daemon, enables 
 The command-line utility groups install `ack`, `ripgrep`, and `fd` through `modules.programs.cli.search`, and `coreutils` plus `pciutils` through `modules.programs.cli.system`.
 
 The OBS module installs OBS Studio through NixOS's native wrapper. Enabling `modules.programs.obs.ndi` adds `pkgs.obs-studio-plugins.obs-ndi`, a compatibility alias for DistroAV—the plugin currently described by nixpkgs as formerly `obs-ndi`. DistroAV links the proprietary `ndi-6` SDK, so the repository's host package set must continue allowing unfree packages. The OBS overlay narrowly replaces only the `ndi-6` source archive hash because the vendor changed the file served at its stable download URL without the pinned nixpkgs expression being updated; DistroAV is rebuilt against that corrected SDK derivation. Enabling `modules.programs.obs.virtualCamera` configures the `v4l2loopback` kernel module and its `OBS Cam` device. The `virtualCamera.videoNr` option selects the numeric device suffix; `smunix` uses `10`, producing `/dev/video10` instead of competing with physical cameras near `/dev/video0`. Enabling OBS also installs `v4l-utils`, providing `v4l2-ctl` for listing and inspecting the loopback device. The module adds the primary user to `video` and `render`; log out and back in after activation so those supplementary groups are present in the session.
+
+### OBSBOT Tail 2 automatic startup and DJI Mic 3 audio
+
+The enabled `obsbotAutoStart` feature matches the primary capture-capable Video4Linux interface below OBSBOT USB vendor `3564`, creates the stable `/dev/obsbot-tail2` symlink, and requests the `obsbot-tail2.service` Home Manager user unit. The service waits for the capture node, displays a desktop notification, and launches the wrapped OBS package inside the graphical session with `--startvirtualcam`, `--minimize-to-tray`, and the configured collection, profile, and scene. It also starts at graphical login when the camera was connected before login.
+
+Prepare OBS once through its GUI by creating a collection, profile, and scene named `Tail 2`. Add `/dev/obsbot-tail2` as the **Video Capture Device (V4L2)** source. The UVC product ID is optional because its value was not yet recorded; after connecting the Tail 2 in UVC mode, obtain `ID_MODEL_ID` with `udevadm info --query=property --name=/dev/obsbot-tail2` and set `obsbotAutoStart.productId` if stricter matching is desired.
+
+The DJI Mic 3 connected to the Tail 2 MIC IN port is audio, not part of `/dev/video10`. Find the Tail 2/DJI PipeWire source with `wpctl status` or `pactl list short sources`, disable the same microphone under OBS **Settings → Audio** to avoid duplicate global capture, and add it to the `Tail 2` scene as **Audio Capture Device (PulseAudio)**. Use a 48 kHz OBS sample rate when that endpoint supports it. Conferencing applications should select **OBS Cam** for video and the Tail 2/DJI microphone source separately. A separate PipeWire virtual microphone is required only when another application must receive OBS-processed audio.
 
 The AI module provides one host-level switch and a typed client selector. Selecting `"kimi"` installs the upstream Kimi Code package exposed as `pkgs.kimi-code` by the repository overlay; run it with `kimi`. The selector currently accepts only Kimi, while its package map and enum provide the extension point for a future Claude Code client. For Kimi, the module also decrypts the host-specific age payload from the private input at user-login time and installs `~/.kimi-code/config.toml` with mode `0600`; the plaintext API key never enters the Nix store.
 

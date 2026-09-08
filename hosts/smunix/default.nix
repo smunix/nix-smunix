@@ -111,6 +111,14 @@
           enable = true;
           videoNr = 10;
         };
+        obsbotAutoStart = {
+          enable = true;
+          vendorId = "3564";
+          deviceSymlink = "obsbot-tail2";
+          collection = "Tail 2";
+          profile = "Tail 2";
+          scene = "Tail 2";
+        };
       };
       cli = {
         compress.enable = true;

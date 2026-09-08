@@ -35,7 +35,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Vim | `modules.desktop.editors.vim.enable` | Installs Vim through Home Manager. |
 | Zed | `modules.desktop.editors.zed.enable` | Installs and configures Zed with Vim mode and Nix language support. |
 | Firefox | `modules.programs.firefox.enable` | Enables Firefox. |
-| OBS Studio | `modules.programs.obs.enable`, `.ndi.enable`, `.virtualCamera.enable`, `.virtualCamera.videoNr` | Installs wrapped OBS Studio and `v4l-utils` for `v4l2-ctl`, optionally adds the `obs-ndi` compatibility package backed by DistroAV and the unfree NDI 6 SDK, configures a numerically selectable V4L2 loopback virtual camera, and grants the primary user `video` and `render` access. The `smunix` host selects video number `10`, yielding `/dev/video10`. |
+| OBS Studio | `modules.programs.obs.enable`, `.ndi.enable`, `.virtualCamera.*`, `.obsbotAutoStart.*` | Installs wrapped OBS Studio and `v4l-utils`, optionally adds DistroAV/NDI, configures `/dev/video10`, and grants `video` and `render` access. The enabled OBSBOT feature matches Tail 2 UVC capture interfaces, creates `/dev/obsbot-tail2`, sends a desktop notification, and starts the saved `Tail 2` OBS collection, profile, scene, and virtual camera through a graphical Home Manager user service. |
 | Search utilities | `modules.programs.cli.search.enable` | Installs `ack`, `ripgrep`, and `fd` as a focused text and filesystem search toolset. |
 | System utilities | `modules.programs.cli.system.enable` | Installs `coreutils` and `pciutils` as foundational command-line inspection tools. |
 | Waybar | `modules.programs.waybar.enable` | Enables Waybar as a standalone program feature for desktop environments that use it. |
