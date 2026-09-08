@@ -71,7 +71,13 @@
       zellij.enable = true;
     };
     security = {
-      fingerprint.enable = true;
+      fingerprint = {
+        enable = true;
+        enrollment.fingers = [
+          "left-index-finger"
+          "right-index-finger"
+        ];
+      };
 
       yubikey = {
         enable = true;
@@ -94,8 +100,24 @@
     };
 
     desktop = {
-      plasma.enable = true;
-      niri.enable = true;
+      plasma = {
+        enable = true;
+        screenLock = {
+          enable = true;
+          timeoutMinutes = 10;
+          lockOnResume = true;
+          graceSeconds = 0;
+        };
+      };
+      niri = {
+        enable = true;
+        screenLock = {
+          enable = true;
+          timeoutSeconds = 600;
+          screenOffDelaySeconds = 60;
+          lockOnSuspend = true;
+        };
+      };
       terminal = {
         default = "ghostty";
         ghostty.enable = true;

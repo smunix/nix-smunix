@@ -1,6 +1,10 @@
 {
   fontScale,
   homeDirectory,
+  idleLockEnabled,
+  idleLockTimeout,
+  idleScreenOffTimeout,
+  lockBeforeSuspend,
   wallpaper,
   wallpaperDirectory,
 }: {
@@ -391,6 +395,8 @@
     effects = true;
   };
 
+  lockscreen.lock_before_suspend = lockBeforeSuspend;
+
   system.monitor = {
     enabled = true;
     cpu_poll_seconds = 2.0;
@@ -409,12 +415,12 @@
     pre_action_fade_seconds = 2.0;
     behavior = {
       lock = {
-        timeout = 600;
+        timeout = idleLockTimeout;
         action = "lock";
-        enabled = true;
+        enabled = idleLockEnabled;
       };
       screen-off = {
-        timeout = 660;
+        timeout = idleScreenOffTimeout;
         action = "screen_off";
         enabled = true;
       };

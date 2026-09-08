@@ -15,13 +15,45 @@
   wallpaper = "${wallpaperDirectory}/anime-girls_tea.jpg";
   noctaliaSettings = import ./niri/_noctalia-settings.nix {
     homeDirectory = config.user.home;
+    idleLockEnabled = cfg.screenLock.enable;
+    idleLockTimeout = cfg.screenLock.timeoutSeconds;
+    idleScreenOffTimeout = cfg.screenLock.timeoutSeconds + cfg.screenLock.screenOffDelaySeconds;
+    lockBeforeSuspend = cfg.screenLock.lockOnSuspend;
     inherit fontScale wallpaper wallpaperDirectory;
   };
 in {
   imports = [inputs.noctalia.nixosModules.default];
 
-  options.modules.desktop.niri.enable =
-    lib.mkEnableOption "the Niri Wayland compositor with the Noctalia desktop shell";
+  options.modules.desktop.niri = {
+    enable =
+      lib.mkEnableOption "the Niri Wayland compositor with the Noctalia desktop shell";
+
+    screenLock = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether Noctalia automatically locks the Niri session after inactivity.";
+      };
+
+      timeoutSeconds = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 600;
+        description = "Seconds of inactivity before Noctalia locks the Niri session.";
+      };
+
+      screenOffDelaySeconds = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 60;
+        description = "Seconds after automatic locking before Noctalia switches the displays off.";
+      };
+
+      lockOnSuspend = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether Noctalia locks the session before suspend.";
+      };
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     programs = {

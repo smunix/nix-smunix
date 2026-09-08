@@ -378,46 +378,81 @@ The shared root module configures `home-manager.backupCommand` with a generated 
 
 The timestamp includes nanoseconds, and the script adds a numeric suffix if the generated destination already exists. Existing backups are never overwritten. This replaces the previous fixed `.backup` extension, so a file such as `~/.gtkrc-2.0.backup` cannot block a later activation.
 
-## Fingerprint authentication
+## Fingerprint authentication and automatic locking
 
-The `smunix` host enables `modules.security.fingerprint`, which activates fprintd and its PAM module. Fingerprints are accepted for interactive SDDM, console login, Plasma and Swaylock unlocking, sudo, su, polkit, and systemd-run0 prompts. Fingerprint authentication is explicitly disabled for password changes, user and group administration, autologin helpers, and other noninteractive PAM services.
+The `smunix` host enables `modules.security.fingerprint`, which activates fprintd and its PAM module. Fingerprints are accepted for interactive SDDM, console login, Plasma fingerprint unlock, Noctalia and Swaylock unlock, sudo, su, polkit, and systemd-run0 prompts. Fingerprint authentication is explicitly disabled for password changes, user and group administration, autologin helpers, and other noninteractive PAM services.
+
+The desktop modules enforce the following automatic-lock policy:
+
+| Session | Idle lock | Additional behavior | Fingerprint PAM service |
+|---|---:|---|---|
+| Plasma | 10 minutes | Zero-second grace period and authentication after resume | `kde-fingerprint` |
+| Niri with Noctalia | 600 seconds | Displays switch off after another 60 seconds and the session locks before suspend | `login` |
+| Swaylock when launched manually | Not responsible for the idle timer | Uses the same enrolled database | `swaylock` |
+
+Niri uses Noctalia as its active lock screen rather than Swaylock. Swaylock fingerprint support remains enabled for manual use or a future Sway session. Plasma deliberately keeps its generic `kde` PAM service password-only and uses `kde-fingerprint` for biometric unlock, preventing the fingerprint conversation from blocking password entry.
 
 The generated PAM order keeps the existing recovery paths: YubiKey U2F is attempted first, fingerprint authentication is attempted next, and the normal password remains available afterward. A fingerprint does not unlock the LUKS volumes during early boot; that remains the responsibility of the enrolled YubiKey FIDO2 token or a LUKS passphrase.
 
-After activating the system configuration, enroll a finger as `smunix` without `sudo`:
+The configured enrollment set contains both index fingers:
+
+```nix
+enrollment.fingers = [
+  "left-index-finger"
+  "right-index-finger"
+];
+```
+
+After activating the configuration, enroll that complete set as `smunix` without `sudo`:
+
+```sh
+fingerprint-enroll-configured
+```
+
+The helper calls `fprintd-enroll` for each configured finger and lists the resulting database. It also accepts an explicit subset or additional valid fingers:
+
+```sh
+fingerprint-enroll-configured left-thumb right-thumb
+```
+
+List and verify the configured prints with:
+
+```sh
+fingerprint-list
+fingerprint-verify-configured
+```
+
+Verification is interactive and requests each configured finger in sequence. To verify only selected fingers, pass them explicitly:
+
+```sh
+fingerprint-verify-configured left-index-finger right-index-finger
+```
+
+The underlying fprintd commands remain available for individual operations:[1]
 
 ```sh
 fprintd-enroll -f right-index-finger
-```
-
-Touch or swipe the requested finger repeatedly until enrollment completes. Valid finger names include `left-thumb`, `left-index-finger`, `right-thumb`, and `right-index-finger`. Enroll additional fingers by repeating the command with another `-f` value.
-
-List and verify the enrolled prints:
-
-```sh
 fprintd-list "$USER"
 fprintd-verify -f right-index-finger
-```
-
-To remove all prints for the current account and start again:
-
-```sh
 fprintd-delete "$USER"
 ```
 
-Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.
+Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[1] [2]
 
 Keep a root recovery shell open during initial testing. In another terminal, test interactive authentication before logging out:
 
 ```sh
 sudo -i
 sudo nixos-rebuild test --flake .#smunix
-fprintd-verify
+fingerprint-verify-configured
 sudo -k
 sudo true
 ```
 
-Test the fingerprint, YubiKey, and password paths separately. If `fprintd-enroll` reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
+Test the fingerprint, YubiKey, and password paths separately. If enrollment reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
+
+[1]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
+[2]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
 
 ## YubiKey authentication
 
