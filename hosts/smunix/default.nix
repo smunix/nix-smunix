@@ -22,7 +22,10 @@
 
     hardware = {
       pipewire.enable = true;
-      printing.enable = true;
+      printing = {
+        enable = true;
+        networkDiscovery.enable = true;
+      };
       power = {
         backend = "tlp";
         lid.enable = true;

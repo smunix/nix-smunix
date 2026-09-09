@@ -33,6 +33,10 @@ modules = {
   networking.networkManager.enable = true;
   hardware = {
     pipewire.enable = true;
+    printing = {
+      enable = true;
+      networkDiscovery.enable = true;
+    };
     power = {
       backend = "tlp";
       lid.enable = true;
@@ -368,6 +372,65 @@ sudo nixos-rebuild switch --flake .#smunix
 
 The host’s filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix`. Keep those values aligned with the machine’s generated hardware configuration.
 
+## Network printer discovery
+
+The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[1] [2]
+
+| Option | Default | Purpose |
+|---|---:|---|
+| `modules.hardware.printing.networkDiscovery.enable` | `false` | Enables Avahi-based discovery for network printers. The `smunix` host explicitly turns it on. |
+| `networkDiscovery.autoCreateQueues` | `true` | Runs `cups-browsed` so compatible DNS-SD printers can appear as local CUPS queues automatically. |
+| `networkDiscovery.resolveLocalNames` | `true` | Enables IPv4 `.local` host-name resolution through Avahi. |
+| `networkDiscovery.openFirewall` | `true` | Allows inbound mDNS discovery traffic on UDP port 5353. |
+| `modules.hardware.printing.drivers` | `[]` | Adds legacy CUPS drivers when a printer does not support driverless IPP Everywhere or AirPrint. |
+
+The module does **not** advertise queues owned by this computer and does not expose the local CUPS server to the LAN. Only the mDNS discovery port is opened. Printer administration remains available locally through **System Settings → Printers** in Plasma or `http://localhost:631`; Niri can use the same local CUPS page in a browser.
+
+After activating the configuration, inspect the discovery services and advertised IPP endpoints:
+
+```sh
+systemctl status cups avahi-daemon cups-browsed
+avahi-browse --resolve --terminate _ipp._tcp
+avahi-browse --resolve --terminate _ipps._tcp
+lpinfo -v
+lpstat -e
+lpstat -v
+```
+
+A compatible printer may appear automatically in `lpstat -e`. If it is discovered but no persistent queue is created, add it through Plasma Printer Settings or the local CUPS page and select the driverless entry. A known IPP endpoint can also be added explicitly:
+
+```sh
+sudo lpadmin -p office-printer \
+  -E \
+  -v 'ipps://printer.local/ipp/print' \
+  -m everywhere
+lpoptions -d office-printer
+lp -d office-printer document.pdf
+lpstat -t
+```
+
+Replace the example name and URI with those reported by `avahi-browse` or the printer. Prefer `ipps://` when the device advertises it. For an older printer that requires a model-specific driver, add a package declaratively instead of installing it imperatively:
+
+```nix
+modules.hardware.printing = {
+  enable = true;
+  drivers = with pkgs; [
+    gutenprint
+    hplip
+  ];
+  networkDiscovery.enable = true;
+};
+```
+
+mDNS discovery normally requires the computer and printer to share a multicast-capable LAN. Guest Wi-Fi client isolation, VLAN boundaries, or a router that suppresses multicast can prevent automatic discovery even when direct IP printing works. In that situation, use the printer’s stable `ipp://` or `ipps://` URI, or configure multicast forwarding on the network rather than exposing this computer’s CUPS server. Review failures with:
+
+```sh
+journalctl -b -u avahi-daemon -u cups-browsed -u cups
+```
+
+[1]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
+[2]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
+
 ## Home Manager conflict backups
 
 The shared root module configures `home-manager.backupCommand` with a generated backup script. When Home Manager encounters an unmanaged file at a path it must control, the script moves that file to a sibling path using this format:
@@ -428,7 +491,7 @@ Verification is interactive and requests each configured finger in sequence. To 
 fingerprint-verify-configured left-index-finger right-index-finger
 ```
 
-The underlying fprintd commands remain available for individual operations:[1]
+The underlying fprintd commands remain available for individual operations:[3]
 
 ```sh
 fprintd-enroll -f right-index-finger
@@ -437,7 +500,7 @@ fprintd-verify -f right-index-finger
 fprintd-delete "$USER"
 ```
 
-Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[1] [2]
+Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[3] [4]
 
 Keep a root recovery shell open during initial testing. In another terminal, test interactive authentication before logging out:
 
@@ -451,8 +514,8 @@ sudo true
 
 Test the fingerprint, YubiKey, and password paths separately. If enrollment reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
 
-[1]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
-[2]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
+[3]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
+[4]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
 
 ## YubiKey authentication
 
