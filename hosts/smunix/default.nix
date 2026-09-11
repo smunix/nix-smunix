@@ -114,6 +114,13 @@
       };
       niri = {
         enable = true;
+        gammastep = {
+          enable = true;
+          latitude = 45.529999;
+          longitude = -73.930000;
+          dayTemperature = 6500;
+          nightTemperature = 3500;
+        };
         screenLock = {
           enable = true;
           timeoutSeconds = 600;

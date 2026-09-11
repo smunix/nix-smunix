@@ -112,7 +112,16 @@ modules = {
 
   desktop = {
     plasma.enable = true;
-    niri.enable = true;
+    niri = {
+      enable = true;
+      gammastep = {
+        enable = true;
+        latitude = 45.529999;
+        longitude = -73.930000;
+        dayTemperature = 6500;
+        nightTemperature = 3500;
+      };
+    };
     terminal = {
       default = "ghostty";
       ghostty.enable = true;
@@ -212,6 +221,32 @@ Niri uses resolution-independent widescreen column proportions. Shell, viewer, a
 The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular, Evince, and Zathura are installed as the graphical document viewers; MPV is installed for media playback. TDF is enabled independently as a terminal PDF viewer; run `tdf document.pdf` from Ghostty, WezTerm, or XTerm.
 
 Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace.
+
+### Sunset-scheduled display warmth
+
+The problem with enabling a color-temperature service for every graphical session is that it can conflict with Plasma’s native Night Light. The Niri module therefore owns Gammastep and attaches it specifically to `niri.service`: it starts after Niri, stops with Niri, and also checks that `XDG_CURRENT_DESKTOP=niri`. Logging into Plasma does not start Gammastep.
+
+The `smunix` host uses the approximate Sainte-Marthe-sur-le-Lac coordinates associated with postal code J0N 1P0: latitude `45.529999` and longitude `-73.930000`.[1] Gammastep calculates the local solar schedule from those coordinates, keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
+
+| Option | Selected value | Purpose |
+|---|---:|---|
+| `modules.desktop.niri.gammastep.enable` | `true` | Enables scheduled warm colors in the Niri session only. |
+| `gammastep.latitude` | `45.529999` | Supplies the north–south location used for solar timing. |
+| `gammastep.longitude` | `-73.930000` | Supplies the east–west location used for solar timing. |
+| `gammastep.dayTemperature` | `6500` | Keeps daytime colors neutral. |
+| `gammastep.nightTemperature` | `3500` | Reduces blue light with a visibly warmer nighttime profile. |
+
+Inspect or restart the service from a Niri terminal with:
+
+```sh
+systemctl --user status gammastep
+systemctl --user restart gammastep
+journalctl --user -u gammastep -b
+```
+
+Stopping the service resets the color adjustment; starting it manually from Plasma is rejected by the Niri session condition. Plasma Night Light remains independently configurable through Plasma System Settings.
+
+[1]: https://www.latlong.net/place/sainte-marthe-sur-le-lac-qc-canada-29518.html "Sainte-Marthe-sur-le-Lac coordinates"
 
 ## Niri keybinding reference
 
@@ -374,7 +409,7 @@ The host’s filesystem, encryption, swap, and CPU declarations remain isolated 
 
 ## Network printer discovery
 
-The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[1] [2]
+The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[2] [3]
 
 | Option | Default | Purpose |
 |---|---:|---|
@@ -428,8 +463,8 @@ mDNS discovery normally requires the computer and printer to share a multicast-c
 journalctl -b -u avahi-daemon -u cups-browsed -u cups
 ```
 
-[1]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
-[2]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
+[2]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
+[3]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
 
 ## Home Manager conflict backups
 
@@ -491,7 +526,7 @@ Verification is interactive and requests each configured finger in sequence. To 
 fingerprint-verify-configured left-index-finger right-index-finger
 ```
 
-The underlying fprintd commands remain available for individual operations:[3]
+The underlying fprintd commands remain available for individual operations:[4]
 
 ```sh
 fprintd-enroll -f right-index-finger
@@ -500,7 +535,7 @@ fprintd-verify -f right-index-finger
 fprintd-delete "$USER"
 ```
 
-Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[3] [4]
+Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[4] [5]
 
 Keep a root recovery shell open during initial testing. In another terminal, test interactive authentication before logging out:
 
@@ -514,8 +549,8 @@ sudo true
 
 Test the fingerprint, YubiKey, and password paths separately. If enrollment reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
 
-[3]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
-[4]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
+[4]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
+[5]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
 
 ## YubiKey authentication
 
