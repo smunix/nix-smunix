@@ -116,8 +116,7 @@ modules = {
       enable = true;
       gammastep = {
         enable = true;
-        latitude = 45.529999;
-        longitude = -73.930000;
+        locationProvider = "geoclue2";
         dayTemperature = 6500;
         nightTemperature = 3500;
       };
@@ -226,27 +225,39 @@ Unmatched normal applications default to `dumpster`; later application-specific 
 
 The problem with enabling a color-temperature service for every graphical session is that it can conflict with Plasma’s native Night Light. The Niri module therefore owns Gammastep and attaches it specifically to `niri.service`: it starts after Niri, stops with Niri, and also checks that `XDG_CURRENT_DESKTOP=niri`. Logging into Plasma does not start Gammastep.
 
-The `smunix` host uses the approximate Sainte-Marthe-sur-le-Lac coordinates associated with postal code J0N 1P0: latitude `45.529999` and longitude `-73.930000`.[1] Gammastep calculates the local solar schedule from those coordinates, keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
+The `smunix` host selects `locationProvider = "geoclue2"`, so no fixed latitude or longitude is stored in the host manifest. The module enables the system GeoClue daemon, its user authorization agent, and an explicit Gammastep application permission. GeoClue can obtain location through supported network, Wi-Fi, modem, GPS, or local NMEA sources and returns the position Gammastep uses for sunrise and sunset calculations.[1]
+
+Both the GeoClue agent and Gammastep are attached to `niri.service` and guarded by `XDG_CURRENT_DESKTOP=niri`; neither starts for Plasma. Gammastep keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
 
 | Option | Selected value | Purpose |
 |---|---:|---|
 | `modules.desktop.niri.gammastep.enable` | `true` | Enables scheduled warm colors in the Niri session only. |
-| `gammastep.latitude` | `45.529999` | Supplies the north–south location used for solar timing. |
-| `gammastep.longitude` | `-73.930000` | Supplies the east–west location used for solar timing. |
+| `gammastep.locationProvider` | `"geoclue2"` | Detects the current location automatically instead of storing coordinates. |
 | `gammastep.dayTemperature` | `6500` | Keeps daytime colors neutral. |
 | `gammastep.nightTemperature` | `3500` | Reduces blue light with a visibly warmer nighttime profile. |
 
-Inspect or restart the service from a Niri terminal with:
+The GeoClue configuration allows Gammastep to request location without an interactive authorization prompt. Location-data submission remains disabled; GeoClue may still query the configured geolocation service to determine the current position. Inspect the complete service chain from a Niri terminal with:
 
 ```sh
-systemctl --user status gammastep
+systemctl status geoclue
+systemctl --user status geoclue-agent gammastep
 systemctl --user restart gammastep
-journalctl --user -u gammastep -b
+journalctl -b -u geoclue
+journalctl --user -b -u geoclue-agent -u gammastep
 ```
 
-Stopping the service resets the color adjustment; starting it manually from Plasma is rejected by the Niri session condition. Plasma Night Light remains independently configurable through Plasma System Settings.
+Stopping Gammastep resets the color adjustment; starting it manually from Plasma is rejected by the Niri session condition. Plasma Night Light remains independently configurable through Plasma System Settings. If automatic location is unavailable, retain the same module and switch back to the validated manual provider:
 
-[1]: https://www.latlong.net/place/sainte-marthe-sur-le-lac-qc-canada-29518.html "Sainte-Marthe-sur-le-Lac coordinates"
+```nix
+modules.desktop.niri.gammastep = {
+  enable = true;
+  locationProvider = "manual";
+  latitude = 45.529999;
+  longitude = -73.930000;
+};
+```
+
+[1]: https://man.archlinux.org/man/geoclue "GeoClue configuration manual"
 
 ## Niri keybinding reference
 

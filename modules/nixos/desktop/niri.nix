@@ -31,6 +31,15 @@ in {
     gammastep = {
       enable = lib.mkEnableOption "sunset-scheduled warm display colors in Niri";
 
+      locationProvider = lib.mkOption {
+        type = lib.types.enum [
+          "manual"
+          "geoclue2"
+        ];
+        default = "manual";
+        description = "How Gammastep obtains the location used for solar scheduling.";
+      };
+
       latitude = lib.mkOption {
         type = lib.types.nullOr (lib.types.numbers.between (-90.0) 90.0);
         default = null;
@@ -88,8 +97,9 @@ in {
       {
         assertion =
           !cfg.gammastep.enable
+          || cfg.gammastep.locationProvider == "geoclue2"
           || (cfg.gammastep.latitude != null && cfg.gammastep.longitude != null);
-        message = "Niri Gammastep requires both latitude and longitude for sunset scheduling.";
+        message = "Niri Gammastep with manual location requires both latitude and longitude.";
       }
     ];
 
@@ -112,6 +122,28 @@ in {
     security.polkit.enable = true;
     security.pam.services.sddm.enableGnomeKeyring = true;
     services.gnome.gnome-keyring.enable = true;
+
+    services.geoclue2 =
+      lib.mkIf (
+        cfg.gammastep.enable && cfg.gammastep.locationProvider == "geoclue2"
+      ) {
+        enable = true;
+        enableDemoAgent = true;
+        appConfig.gammastep = {
+          isAllowed = true;
+          isSystem = true;
+        };
+      };
+
+    systemd.user.services.geoclue-agent =
+      lib.mkIf (
+        cfg.gammastep.enable && cfg.gammastep.locationProvider == "geoclue2"
+      ) {
+        wantedBy = lib.mkForce ["niri.service"];
+        after = ["niri.service"];
+        partOf = ["niri.service"];
+        unitConfig.ConditionEnvironment = "XDG_CURRENT_DESKTOP=niri";
+      };
 
     xdg.portal = {
       enable = true;
@@ -204,7 +236,7 @@ in {
 
       services.gammastep = lib.mkIf cfg.gammastep.enable {
         enable = true;
-        provider = "manual";
+        provider = cfg.gammastep.locationProvider;
         latitude = cfg.gammastep.latitude;
         longitude = cfg.gammastep.longitude;
         temperature = {
@@ -221,7 +253,10 @@ in {
 
       systemd.user.services.gammastep = lib.mkIf cfg.gammastep.enable {
         Unit = {
-          After = lib.mkForce ["niri.service"];
+          After = lib.mkForce (
+            ["niri.service"]
+            ++ lib.optional (cfg.gammastep.locationProvider == "geoclue2") "geoclue-agent.service"
+          );
           PartOf = lib.mkForce ["niri.service"];
           ConditionEnvironment = "XDG_CURRENT_DESKTOP=niri";
         };
