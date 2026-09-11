@@ -117,6 +117,10 @@ modules = {
       gammastep = {
         enable = true;
         locationProvider = "geoclue2";
+        fallbackToManual = true;
+        latitude = 45.529999;
+        longitude = -73.930000;
+        locationTimeoutSeconds = 20;
         dayTemperature = 6500;
         nightTemperature = 3500;
       };
@@ -225,39 +229,38 @@ Unmatched normal applications default to `dumpster`; later application-specific 
 
 The problem with enabling a color-temperature service for every graphical session is that it can conflict with Plasma’s native Night Light. The Niri module therefore owns Gammastep and attaches it specifically to `niri.service`: it starts after Niri, stops with Niri, and also checks that `XDG_CURRENT_DESKTOP=niri`. Logging into Plasma does not start Gammastep.
 
-The `smunix` host selects `locationProvider = "geoclue2"`, so no fixed latitude or longitude is stored in the host manifest. The module enables the system GeoClue daemon, its user authorization agent, and an explicit Gammastep application permission. GeoClue can obtain location through supported network, Wi-Fi, modem, GPS, or local NMEA sources and returns the position Gammastep uses for sunrise and sunset calculations.[1]
+The reported failure did not mean that Wi-Fi was disabled. The evaluated host already uses NetworkManager with the compatible `wpa_supplicant` backend, Avahi is enabled, and GeoClue is configured to query BeaconDB. The current error means GeoClue received an empty access-point scan at lookup time. GeoClue uses nearby Wi-Fi identifiers for network location through `wpa_supplicant`; Avahi instead serves GeoClue’s network-NMEA source and is not required for ordinary Wi-Fi positioning.[1] [2]
 
-Both the GeoClue agent and Gammastep are attached to `niri.service` and guarded by `XDG_CURRENT_DESKTOP=niri`; neither starts for Plasma. Gammastep keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
+The `smunix` host keeps `locationProvider = "geoclue2"` as the primary path. Before launching Gammastep, a Niri-only wrapper asks NetworkManager for a fresh scan and waits up to five two-second attempts for at least one BSSID. It then gives GeoClue 20 seconds to resolve a location. If that probe still fails, Gammastep starts with the approximate J0N 1P0 coordinates instead of leaving the display without a sunset schedule. GeoClue’s unused NMEA, 3G, CDMA, and modem-GPS sources are disabled, removing the unrelated Avahi/NMEA warning while leaving Wi-Fi location active.
+
+Both the GeoClue agent and Gammastep are attached to `niri.service` and guarded by `XDG_CURRENT_DESKTOP=niri`; neither starts for Plasma. Gammastep keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Gammastep performs this twilight transition smoothly over roughly an hour.[3] Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
 
 | Option | Selected value | Purpose |
 |---|---:|---|
 | `modules.desktop.niri.gammastep.enable` | `true` | Enables scheduled warm colors in the Niri session only. |
-| `gammastep.locationProvider` | `"geoclue2"` | Detects the current location automatically instead of storing coordinates. |
+| `gammastep.locationProvider` | `"geoclue2"` | Uses automatic location as the primary provider. |
+| `gammastep.fallbackToManual` | `true` | Keeps sunset scheduling operational when GeoClue cannot locate the host. |
+| `gammastep.latitude`, `.longitude` | `45.529999`, `-73.930000` | Supplies the approximate J0N 1P0 fallback location. |
+| `gammastep.locationTimeoutSeconds` | `20` | Bounds the automatic-location probe before fallback. |
 | `gammastep.dayTemperature` | `6500` | Keeps daytime colors neutral. |
 | `gammastep.nightTemperature` | `3500` | Reduces blue light with a visibly warmer nighttime profile. |
 
-The GeoClue configuration allows Gammastep to request location without an interactive authorization prompt. Location-data submission remains disabled; GeoClue may still query the configured geolocation service to determine the current position. Inspect the complete service chain from a Niri terminal with:
+The GeoClue configuration allows Gammastep to request location without an interactive authorization prompt. Location-data submission remains disabled; GeoClue may still query the configured geolocation service to determine the current position. Inspect the access-point scan and complete service chain from a Niri terminal with:
 
 ```sh
-systemctl status geoclue
+nmcli -t -f BSSID device wifi list --rescan yes
+systemctl status avahi-daemon geoclue
 systemctl --user status geoclue-agent gammastep
 systemctl --user restart gammastep
 journalctl -b -u geoclue
 journalctl --user -b -u geoclue-agent -u gammastep
 ```
 
-Stopping Gammastep resets the color adjustment; starting it manually from Plasma is rejected by the Niri session condition. Plasma Night Light remains independently configurable through Plasma System Settings. If automatic location is unavailable, retain the same module and switch back to the validated manual provider:
-
-```nix
-modules.desktop.niri.gammastep = {
-  enable = true;
-  locationProvider = "manual";
-  latitude = 45.529999;
-  longitude = -73.930000;
-};
-```
+When automatic lookup fails, the user journal records `Gammastep: GeoClue location unavailable; using configured manual fallback.` This is a controlled fallback rather than a service failure. Stopping Gammastep resets the color adjustment; starting it manually from Plasma is rejected by the Niri session condition. Plasma Night Light remains independently configurable through Plasma System Settings.
 
 [1]: https://man.archlinux.org/man/geoclue "GeoClue configuration manual"
+[2]: https://fedoramagazine.org/the-state-of-the-location-permission-on-fedora-linux-in-2025/ "GeoClue Wi-Fi positioning and wpa_supplicant"
+[3]: https://man.archlinux.org/man/gammastep.1.en "Gammastep color-temperature scheduling"
 
 ## Niri keybinding reference
 
@@ -420,7 +423,7 @@ The host’s filesystem, encryption, swap, and CPU declarations remain isolated 
 
 ## Network printer discovery
 
-The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[2] [3]
+The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[4] [5]
 
 | Option | Default | Purpose |
 |---|---:|---|
@@ -474,8 +477,8 @@ mDNS discovery normally requires the computer and printer to share a multicast-c
 journalctl -b -u avahi-daemon -u cups-browsed -u cups
 ```
 
-[2]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
-[3]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
+[4]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
+[5]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
 
 ## Home Manager conflict backups
 
@@ -537,7 +540,7 @@ Verification is interactive and requests each configured finger in sequence. To 
 fingerprint-verify-configured left-index-finger right-index-finger
 ```
 
-The underlying fprintd commands remain available for individual operations:[4]
+The underlying fprintd commands remain available for individual operations:[6]
 
 ```sh
 fprintd-enroll -f right-index-finger
@@ -546,7 +549,7 @@ fprintd-verify -f right-index-finger
 fprintd-delete "$USER"
 ```
 
-Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[4] [5]
+Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[6] [7]
 
 Keep a root recovery shell open during initial testing. In another terminal, test interactive authentication before logging out:
 
@@ -560,8 +563,8 @@ sudo true
 
 Test the fingerprint, YubiKey, and password paths separately. If enrollment reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
 
-[4]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
-[5]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
+[6]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
+[7]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
 
 ## YubiKey authentication
 

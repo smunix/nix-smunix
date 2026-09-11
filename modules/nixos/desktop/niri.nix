@@ -21,6 +21,50 @@
     lockBeforeSuspend = cfg.screenLock.lockOnSuspend;
     inherit fontScale wallpaper wallpaperDirectory;
   };
+  gammastepManualFallbackConfig = pkgs.writeText "gammastep-manual-fallback.ini" ''
+    [general]
+    temp-day=${toString cfg.gammastep.dayTemperature}
+    temp-night=${toString cfg.gammastep.nightTemperature}
+    fade=1
+    brightness-day=1.0
+    brightness-night=1.0
+    adjustment-method=wayland
+    location-provider=manual
+
+    [manual]
+    lat=${toString cfg.gammastep.latitude}
+    lon=${toString cfg.gammastep.longitude}
+  '';
+  gammastepAutoLocationLauncher = pkgs.writeShellScript "gammastep-niri-auto-location" ''
+    set -u
+
+    automatic_config="${config.user.home}/.config/gammastep/config.ini"
+
+    if ${pkgs.networkmanager}/bin/nmcli radio wifi 2>/dev/null | ${pkgs.gnugrep}/bin/grep -qx enabled; then
+      attempt=1
+      while [ "$attempt" -le 5 ]; do
+        if ${pkgs.networkmanager}/bin/nmcli -t -f BSSID device wifi list --rescan yes 2>/dev/null \
+          | ${pkgs.gnugrep}/bin/grep -q .; then
+          break
+        fi
+        attempt=$((attempt + 1))
+        ${pkgs.coreutils}/bin/sleep 2
+      done
+    fi
+
+    if ${pkgs.coreutils}/bin/timeout ${toString cfg.gammastep.locationTimeoutSeconds} \
+      ${pkgs.gammastep}/bin/gammastep -p -c "$automatic_config" >/dev/null 2>&1; then
+      exec ${pkgs.gammastep}/bin/gammastep -c "$automatic_config"
+    fi
+
+    ${lib.optionalString cfg.gammastep.fallbackToManual ''
+      echo "Gammastep: GeoClue location unavailable; using configured manual fallback." >&2
+      exec ${pkgs.gammastep}/bin/gammastep -c ${gammastepManualFallbackConfig}
+    ''}
+
+    echo "Gammastep: GeoClue location unavailable and no manual fallback is configured." >&2
+    exit 1
+  '';
 in {
   imports = [inputs.noctalia.nixosModules.default];
 
@@ -43,13 +87,25 @@ in {
       latitude = lib.mkOption {
         type = lib.types.nullOr (lib.types.numbers.between (-90.0) 90.0);
         default = null;
-        description = "Latitude used to calculate sunrise and sunset.";
+        description = "Latitude used by the manual provider or GeoClue fallback.";
       };
 
       longitude = lib.mkOption {
         type = lib.types.nullOr (lib.types.numbers.between (-180.0) 180.0);
         default = null;
-        description = "Longitude used to calculate sunrise and sunset.";
+        description = "Longitude used by the manual provider or GeoClue fallback.";
+      };
+
+      fallbackToManual = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to use the configured coordinates when GeoClue cannot determine a location.";
+      };
+
+      locationTimeoutSeconds = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 20;
+        description = "Seconds to wait for GeoClue before selecting the manual fallback.";
       };
 
       dayTemperature = lib.mkOption {
@@ -97,9 +153,13 @@ in {
       {
         assertion =
           !cfg.gammastep.enable
-          || cfg.gammastep.locationProvider == "geoclue2"
+          || (
+            cfg.gammastep.locationProvider
+            == "geoclue2"
+            && !cfg.gammastep.fallbackToManual
+          )
           || (cfg.gammastep.latitude != null && cfg.gammastep.longitude != null);
-        message = "Niri Gammastep with manual location requires both latitude and longitude.";
+        message = "Niri Gammastep requires both latitude and longitude for manual location or fallback.";
       }
     ];
 
@@ -129,6 +189,11 @@ in {
       ) {
         enable = true;
         enableDemoAgent = true;
+        enableNmea = false;
+        enable3G = false;
+        enableCDMA = false;
+        enableModemGPS = false;
+        enableWifi = true;
         appConfig.gammastep = {
           isAllowed = true;
           isSystem = true;
@@ -261,6 +326,9 @@ in {
           ConditionEnvironment = "XDG_CURRENT_DESKTOP=niri";
         };
         Install.WantedBy = lib.mkForce ["niri.service"];
+        Service.ExecStart = lib.mkIf (
+          cfg.gammastep.locationProvider == "geoclue2"
+        ) (lib.mkForce gammastepAutoLocationLauncher);
       };
 
       xdg.configFile = {

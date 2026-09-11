@@ -117,6 +117,10 @@
         gammastep = {
           enable = true;
           locationProvider = "geoclue2";
+          fallbackToManual = true;
+          latitude = 45.529999;
+          longitude = -73.930000;
+          locationTimeoutSeconds = 20;
           dayTemperature = 6500;
           nightTemperature = 3500;
         };
