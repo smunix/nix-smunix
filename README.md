@@ -861,7 +861,7 @@ The Rust module is the single owner of the host toolchain version. `modules.deve
 | BPF linker | Official static `bpf-linker` 0.11.1 x86_64-musl artifact with the supplied fixed hash |
 | Build command | `aya-cargo`, with `ebpf-cargo` as a shell alias |
 | Kernel bindings | `aya-tool` with wrapped `bpftool`, `bindgen`, and libclang dependencies; installed on both the host and VM |
-| Inspection tools | `bpftool`, `pahole`, `llvm-objdump`, and `tcpdump` |
+| Inspection and tracing tools | `bpftool`, `bpftrace` 0.25.1, `pahole`, `llvm-objdump`, and `tcpdump`; installed on both the host and VM |
 | Virtualization access | The primary user is added to `kvm`; log out and back in after activation |
 | Guest resources | Four virtual CPUs and 4096 MiB RAM |
 | Shared source | The requested host directory is mounted at `/host` through VirtFS/9P[12] |
@@ -875,7 +875,14 @@ aya-cargo clippy
 aya-rustc --version
 bpf-linker --version
 bpftool version
+bpftrace --version
 aya-tool --help
+```
+
+Use `bpftrace` for concise, dynamic eBPF tracing on either the host or inside `ebpf-vm`; attaching probes normally requires elevated privileges.[14]
+
+```sh
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_execve { printf("%s\\n", comm); }'
 ```
 
 Generate bindings for one or more kernel types on either the host or inside `ebpf-vm`:
@@ -934,7 +941,7 @@ ssh-keygen -R '[127.0.0.1]:2222'
 ssh -o StrictHostKeyChecking=accept-new -p 2222 dev@127.0.0.1
 ```
 
-The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `aya-tool`, `bpftool`, `pahole`, `iproute2`, and `tcpdump`. **The `dev`/`dev` credentials, passwordless sudo, and root console autologin are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
+The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `aya-tool`, `bpftool`, `bpftrace`, `pahole`, `iproute2`, and `tcpdump`. **The `dev`/`dev` credentials, passwordless sudo, and root console autologin are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
 
 Inside the VM, inspect the environment with:
 
@@ -951,3 +958,4 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 [11]: https://aya-rs.dev/book/start/development.html "Aya development environment"
 [12]: https://nixos.org/manual/nixos/stable/#sec-qemu-vm "NixOS QEMU virtual machines"
 [13]: https://aya-rs.dev/book/aya/aya-tool.html "Using aya-tool"
+[14]: https://bpftrace.org/docs/release_025/docs "bpftrace 0.25 documentation"

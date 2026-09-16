@@ -51,6 +51,7 @@ in {
           pkgs.aya-tool
           pkgs.bpf-linker-aya
           pkgs.bpftools
+          pkgs.bpftrace
           pkgs.llvmPackages.llvm
           pkgs.pahole
           pkgs.tcpdump

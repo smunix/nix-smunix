@@ -64,6 +64,7 @@ in {
   environment.systemPackages = with pkgs; [
     aya-tool
     bpftools
+    bpftrace
     iproute2
     pahole
     tcpdump
