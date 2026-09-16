@@ -128,6 +128,7 @@
         packageChannel = "unstable";
         monitorLayout = {
           enable = true;
+          primaryOutput = "external";
           external = {
             connector = "DP-5";
             mode = "2560x1440@59.91";

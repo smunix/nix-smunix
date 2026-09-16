@@ -54,15 +54,6 @@ layout {
     }
 }
 
-// Persistent workspace order.
-workspace "shell"
-workspace "internet"
-workspace "viewers"
-workspace "programming"
-workspace "explorers"
-workspace "chats"
-workspace "dumpster"
-
 window-rule {
     geometry-corner-radius 20
     clip-to-geometry true
@@ -212,6 +203,7 @@ binds {
     Mod+Ctrl+Shift+J { move-column-to-monitor-down; }
     Mod+Ctrl+Shift+K { move-column-to-monitor-up; }
     Mod+Ctrl+Shift+L { move-column-to-monitor-right; }
+    Mod+O repeat=false hotkey-overlay-title="Move Window to Other Monitor" { move-window-to-monitor-next; }
 
     // Workspaces.
     Mod+Page_Down { focus-workspace-down; }

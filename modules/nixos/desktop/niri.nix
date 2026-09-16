@@ -23,6 +23,31 @@
     lockBeforeSuspend = cfg.screenLock.lockOnSuspend;
     inherit fontScale wallpaper wallpaperDirectory;
   };
+  workspaceNames = [
+    "shell"
+    "internet"
+    "viewers"
+    "programming"
+    "explorers"
+    "chats"
+    "dumpster"
+  ];
+  primaryWorkspaceOutput =
+    if cfg.monitorLayout.primaryOutput == "external"
+    then cfg.monitorLayout.external.connector
+    else cfg.monitorLayout.internal.connector;
+  workspaceConfig =
+    lib.concatMapStringsSep "\n" (
+      name:
+        if cfg.monitorLayout.enable
+        then ''
+          workspace "${name}" {
+              open-on-output "${primaryWorkspaceOutput}"
+          }
+        ''
+        else ''workspace "${name}"''
+    )
+    workspaceNames;
   externalLayoutConfig =
     lib.optionalString cfg.monitorLayout.external.fullWidthColumns
     "    layout {\n        default-column-width { proportion 1.0; }\n    }\n";
@@ -46,6 +71,7 @@
   '';
   niriConfig = pkgs.writeText "niri-config.kdl" ''
     ${monitorConfig}
+    ${workspaceConfig}
     ${builtins.readFile ./niri/config.kdl}
   '';
   gammastepManualFallbackConfig = pkgs.writeText "gammastep-manual-fallback.ini" ''
@@ -110,6 +136,15 @@ in {
 
     monitorLayout = {
       enable = lib.mkEnableOption "the configured external and internal Niri output layout";
+
+      primaryOutput = lib.mkOption {
+        type = lib.types.enum [
+          "external"
+          "internal"
+        ];
+        default = "internal";
+        description = "Which configured output owns the persistent named workspaces when available.";
+      };
 
       external = {
         connector = lib.mkOption {

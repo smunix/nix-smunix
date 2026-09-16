@@ -128,6 +128,7 @@ modules = {
       packageChannel = "unstable";
       monitorLayout = {
         enable = true;
+        primaryOutput = "external";
         external = {
           connector = "DP-5";
           mode = "2560x1440@59.91";
@@ -259,7 +260,7 @@ Niri uses resolution-independent widescreen column proportions. Shell, viewer, a
 
 The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular, Evince, and Zathura are installed as the graphical document viewers; MPV is installed for media playback. TDF is enabled independently as a terminal PDF viewer; run `tdf document.pdf` from Ghostty, WezTerm, or XTerm.
 
-Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace.
+Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace. All seven workspace declarations are generated with `open-on-output "DP-5"`, so each application’s existing `open-on-workspace` rule sends it to the correct named workspace on the external display whenever that output is connected.[2]
 
 ### ASUS portrait monitor layout
 
@@ -272,7 +273,9 @@ The module generates the output fragment from typed `monitorLayout` options inst
 | `DP-5` | `2560x1440@59.91` | 90° counter-clockwise, scale 1 | `x=0 y=0` | New columns default to the full output width. |
 | `eDP-1` | `3840x2400@59.99` | Normal, scale 2 | `x=1440 y=0` | Uses the global widescreen column widths. |
 
-The generated per-output `layout` override prevents new windows on the portrait display from opening as narrow half-width columns while leaving the laptop’s existing one-third, one-half, two-thirds, and full-width presets unchanged. Niri applies configured output rules when a matching display connects; disconnecting `DP-5` leaves the laptop panel available independently.[1]
+The generated per-output `layout` override prevents new windows on the portrait display from opening as narrow half-width columns while leaving the laptop’s existing one-third, one-half, two-thirds, and full-width presets unchanged. `monitorLayout.primaryOutput = "external"` assigns `shell`, `internet`, `viewers`, `programming`, `explorers`, `chats`, and `dumpster` to `DP-5`; this makes it the effective primary application output rather than introducing a compositor-wide primary-monitor flag.
+
+Niri cannot create a second workspace with the same name on `eDP-1`: every monitor has an independent workspace stack, but each named workspace is a single movable workspace. When `DP-5` connects, the assigned named workspaces—and any windows already on them—move to that output. When it disconnects, Niri moves them to an available monitor and remembers their assigned output for reconnection.[2] [3] The unchanged window rules continue routing newly opened applications by workspace name, so Firefox still opens in `internet`, Zed in `programming`, and unmatched applications in `dumpster`, now on `DP-5` while available.
 
 Connector names and refresh rates come from the compositor and can change with a different dock or port. Verify the active names and exact modes after connecting the monitor:
 
@@ -281,19 +284,21 @@ niri msg outputs
 niri validate -c ~/.config/niri/config.kdl
 ```
 
-If the ASUS display appears under a connector other than `DP-5`, update `modules.desktop.niri.monitorLayout.external.connector`. If Niri rejects either configured mode, replace the corresponding typed `monitorLayout` mode with the exact refresh rate reported by `niri msg outputs`. Do not move the generated per-output `layout` block back into the base KDL while using the stable package.
+If the ASUS display appears under a connector other than `DP-5`, update `modules.desktop.niri.monitorLayout.external.connector`; the generated workspace assignments follow that option automatically. If Niri rejects either configured mode, replace the corresponding typed `monitorLayout` mode with the exact refresh rate reported by `niri msg outputs`. Do not move the generated per-output `layout` block back into the base KDL while using the stable package.
 
 [1]: https://niri-wm.github.io/niri/Configuration%3A-Outputs.html "Niri output configuration"
+[2]: https://niri-wm.github.io/niri/Configuration%3A-Named-Workspaces.html "Niri named workspaces and output assignment"
+[3]: https://niri-wm.github.io/niri/Workspaces.html "Niri multi-monitor workspace behavior"
 
 ### Sunset-scheduled display warmth
 
 The problem with enabling a color-temperature service for every graphical session is that it can conflict with Plasma’s native Night Light. The Niri module therefore owns Gammastep and attaches it specifically to `niri.service`: it starts after Niri, stops with Niri, and also checks that `XDG_CURRENT_DESKTOP=niri`. Logging into Plasma does not start Gammastep.
 
-The reported failure did not mean that Wi-Fi was disabled. The evaluated host already uses NetworkManager with the compatible `wpa_supplicant` backend, Avahi is enabled, and GeoClue is configured to query BeaconDB. The current error means GeoClue received an empty access-point scan at lookup time. GeoClue uses nearby Wi-Fi identifiers for network location through `wpa_supplicant`; Avahi instead serves GeoClue’s network-NMEA source and is not required for ordinary Wi-Fi positioning.[2] [3]
+The reported failure did not mean that Wi-Fi was disabled. The evaluated host already uses NetworkManager with the compatible `wpa_supplicant` backend, Avahi is enabled, and GeoClue is configured to query BeaconDB. The current error means GeoClue received an empty access-point scan at lookup time. GeoClue uses nearby Wi-Fi identifiers for network location through `wpa_supplicant`; Avahi instead serves GeoClue’s network-NMEA source and is not required for ordinary Wi-Fi positioning.[4] [5]
 
 The `smunix` host keeps `locationProvider = "geoclue2"` as the primary path. Before launching Gammastep, a Niri-only wrapper asks NetworkManager for a fresh scan and waits up to five two-second attempts for at least one BSSID. It then gives GeoClue 20 seconds to resolve a location. If that probe still fails, Gammastep starts with the approximate J0N 1P0 coordinates instead of leaving the display without a sunset schedule. GeoClue’s unused NMEA, 3G, CDMA, and modem-GPS sources are disabled, removing the unrelated Avahi/NMEA warning while leaving Wi-Fi location active.
 
-Both the GeoClue agent and Gammastep are attached to `niri.service` and guarded by `XDG_CURRENT_DESKTOP=niri`; neither starts for Plasma. Gammastep keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Gammastep performs this twilight transition smoothly over roughly an hour.[4] Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
+Both the GeoClue agent and Gammastep are attached to `niri.service` and guarded by `XDG_CURRENT_DESKTOP=niri`; neither starts for Plasma. Gammastep keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Gammastep performs this twilight transition smoothly over roughly an hour.[6] Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
 
 | Option | Selected value | Purpose |
 |---|---:|---|
@@ -318,9 +323,9 @@ journalctl --user -b -u geoclue-agent -u gammastep
 
 When automatic lookup fails, the user journal records `Gammastep: GeoClue location unavailable; using configured manual fallback.` This is a controlled fallback rather than a service failure. Stopping Gammastep resets the color adjustment; starting it manually from Plasma is rejected by the Niri session condition. Plasma Night Light remains independently configurable through Plasma System Settings.
 
-[2]: https://man.archlinux.org/man/geoclue "GeoClue configuration manual"
-[3]: https://fedoramagazine.org/the-state-of-the-location-permission-on-fedora-linux-in-2025/ "GeoClue Wi-Fi positioning and wpa_supplicant"
-[4]: https://man.archlinux.org/man/gammastep.1.en "Gammastep color-temperature scheduling"
+[4]: https://man.archlinux.org/man/geoclue "GeoClue configuration manual"
+[5]: https://fedoramagazine.org/the-state-of-the-location-permission-on-fedora-linux-in-2025/ "GeoClue Wi-Fi positioning and wpa_supplicant"
+[6]: https://man.archlinux.org/man/gammastep.1.en "Gammastep color-temperature scheduling"
 
 ## Niri keybinding reference
 
@@ -399,6 +404,9 @@ These hardware keys continue working while the session is locked.
 | `Mod+Ctrl+Shift+Right` or `Mod+Ctrl+Shift+L` | Move the focused column to the monitor on the right. |
 | `Mod+Ctrl+Shift+Up` or `Mod+Ctrl+Shift+K` | Move the focused column to the monitor above. |
 | `Mod+Ctrl+Shift+Down` or `Mod+Ctrl+Shift+J` | Move the focused column to the monitor below. |
+| `Mod+O` | Move only the focused window to the next monitor. With two outputs, repeated presses alternate between them. |
+
+`Mod+O` invokes Niri’s native `move-window-to-monitor-next` action. It intentionally moves only the selected window; it does not duplicate or move the named workspace. Window rules are opening policies, so manually moving an existing window does not rerun its `open-on-workspace` rule. Newly opened windows remain routed to their configured named workspace on `DP-5`. To move every window in the current column instead, retain the directional `Mod+Ctrl+Shift+Arrow` bindings shown above.
 
 ### Workspace navigation
 
@@ -483,7 +491,7 @@ The host’s filesystem, encryption, swap, and CPU declarations remain isolated 
 
 ## Network printer discovery
 
-The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[5] [6]
+The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[7] [8]
 
 | Option | Default | Purpose |
 |---|---:|---|
@@ -537,8 +545,8 @@ mDNS discovery normally requires the computer and printer to share a multicast-c
 journalctl -b -u avahi-daemon -u cups-browsed -u cups
 ```
 
-[5]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
-[6]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
+[7]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
+[8]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
 
 ## Home Manager conflict backups
 
@@ -600,7 +608,7 @@ Verification is interactive and requests each configured finger in sequence. To 
 fingerprint-verify-configured left-index-finger right-index-finger
 ```
 
-The underlying fprintd commands remain available for individual operations:[7]
+The underlying fprintd commands remain available for individual operations:[9]
 
 ```sh
 fprintd-enroll -f right-index-finger
@@ -609,7 +617,7 @@ fprintd-verify -f right-index-finger
 fprintd-delete "$USER"
 ```
 
-Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[7] [8]
+Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[9] [10]
 
 Keep a root recovery shell open during initial testing. In another terminal, test interactive authentication before logging out:
 
@@ -623,8 +631,8 @@ sudo true
 
 Test the fingerprint, YubiKey, and password paths separately. If enrollment reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
 
-[7]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
-[8]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
+[9]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
+[10]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
 
 ## YubiKey authentication
 
