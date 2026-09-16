@@ -864,6 +864,7 @@ The Rust module is the single owner of the host toolchain version. `modules.deve
 | Virtualization access | The primary user is added to `kvm`; log out and back in after activation |
 | Guest resources | Four virtual CPUs and 4096 MiB RAM |
 | Shared source | The requested host directory is mounted at `/host` through VirtFS/9P[12] |
+| SSH access | Host loopback `127.0.0.1:2222` forwards to guest TCP port 22; only `dev` may log in |
 
 Plain `cargo`, `rustc`, `rustfmt`, `clippy`, and `rust-analyzer` use the configured nightly throughout the host. `aya-cargo` is the eBPF-specific wrapper: it selects that same nightly explicitly, exports its Rust source tree, and puts the exact `bpf-linker` first on `PATH`:
 
@@ -890,7 +891,26 @@ ebpf-vm --shared-directory "$PWD" -- -nographic
 
 The launcher rejects a missing parameter, nonexistent directory, or unknown option before QEMU starts. Its built-in reference is available with `ebpf-vm --help`.
 
-The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `bpftool`, `pahole`, `iproute2`, `tcpdump`, a `dev` account with password `dev`, passwordless sudo for its wheel group, and root console autologin. **These credentials and privileges are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
+After the VM reaches its login prompt, connect from the host through the loopback-only forwarded port:
+
+```sh
+ssh -o StrictHostKeyChecking=accept-new -p 2222 dev@127.0.0.1
+```
+
+| SSH user | Password | Access policy |
+|---|---|---|
+| `dev` | `dev` | Allowed; this account belongs to `wheel` and has passwordless sudo inside the disposable VM |
+| `root` | None for SSH | Denied by `PermitRootLogin = "no"`; root autologin remains available only on the VM console |
+| Any other account | Not applicable | Denied by the explicit OpenSSH `AllowUsers dev` policy |
+
+The QEMU forward binds only to `127.0.0.1`, so TCP port 2222 is reachable from the host itself rather than the surrounding LAN. Recreating the disposable VM can generate a different SSH host key. If OpenSSH reports a changed key after deliberate VM replacement, remove only this loopback-port entry and reconnect:
+
+```sh
+ssh-keygen -R '[127.0.0.1]:2222'
+ssh -o StrictHostKeyChecking=accept-new -p 2222 dev@127.0.0.1
+```
+
+The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `bpftool`, `pahole`, `iproute2`, and `tcpdump`. **The `dev`/`dev` credentials, passwordless sudo, and root console autologin are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
 
 Inside the VM, inspect the environment with:
 

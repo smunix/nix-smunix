@@ -47,6 +47,17 @@
     wheelNeedsPassword = false;
   };
 
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      AllowUsers = ["dev"];
+      KbdInteractiveAuthentication = false;
+      PasswordAuthentication = true;
+      PermitRootLogin = "no";
+    };
+  };
+
   environment.systemPackages = with pkgs; [
     bpftools
     iproute2
@@ -58,6 +69,16 @@
     memorySize = 4096;
     cores = 4;
     graphics = false;
+    forwardPorts = [
+      {
+        from = "host";
+        host = {
+          address = "127.0.0.1";
+          port = 2222;
+        };
+        guest.port = 22;
+      }
+    ];
     sharedDirectories.host = {
       source = ''"''${AYA_SHARED_DIRECTORY:?launch with: ebpf-vm --shared-directory PATH}"'';
       target = "/host";
