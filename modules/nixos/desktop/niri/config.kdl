@@ -14,6 +14,27 @@ environment {
     TERMINAL "ghostty"
 }
 
+// External ASUS display: portrait orientation on the left.
+// The explicit scale keeps its rotated logical width at 1440 pixels.
+output "DP-5" {
+    mode "2560x1440@59.91"
+    scale 1
+    transform "90"
+    position x=0 y=0
+
+    // Avoid narrow side-by-side columns on the portrait workspace.
+    layout {
+        default-column-width { proportion 1.0; }
+    }
+}
+
+// Built-in HiDPI panel: positioned immediately to the right of DP-5.
+output "eDP-1" {
+    mode "3840x2400@59.99"
+    scale 2
+    position x=1440 y=0
+}
+
 input {
     keyboard {
         xkb {

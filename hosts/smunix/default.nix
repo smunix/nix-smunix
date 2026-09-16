@@ -36,6 +36,17 @@
       };
       nvidia = {
         enable = true;
+        powerManagement = {
+          enable = false;
+          finegrained = false;
+        };
+        prime = {
+          sync.enable = true;
+          offload = {
+            enable = false;
+            enableOffloadCmd = false;
+          };
+        };
         intelBusId = "PCI:0:2:0";
         nvidiaBusId = "PCI:1:0:0";
       };

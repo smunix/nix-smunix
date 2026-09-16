@@ -47,6 +47,17 @@ modules = {
     };
     nvidia = {
       enable = true;
+      powerManagement = {
+        enable = false;
+        finegrained = false;
+      };
+      prime = {
+        sync.enable = true;
+        offload = {
+          enable = false;
+          enableOffloadCmd = false;
+        };
+      };
       intelBusId = "PCI:0:2:0";
       nvidiaBusId = "PCI:1:0:0";
     };
@@ -170,7 +181,7 @@ modules = {
 };
 ```
 
-The `tlp` power backend disables the conflicting power-profiles daemon, enables TLP’s compatible profile service, keeps UPower available for battery telemetry and desktop integration, applies the 75–80% charge window, and suspends on lid closure except while docked. The NVIDIA PRIME PCI bus IDs remain values in the `smunix` host manifest rather than reusable module defaults.
+The `tlp` power backend disables the conflicting power-profiles daemon, enables TLP’s compatible profile service, keeps UPower available for battery telemetry and desktop integration, applies the 75–80% charge window, and suspends on lid closure except while docked. The NVIDIA module exposes `powerManagement.enable`, `powerManagement.finegrained`, `prime.sync.enable`, `prime.offload.enable`, and `prime.offload.enableOffloadCmd` while keeping the PCI bus IDs host-specific. Existing hosts retain the previous power-managed offload defaults; `smunix` instead disables both NVIDIA power-management controls and PRIME offload, disables the `nvidia-offload` helper, and enables PRIME sync. Assertions reject simultaneous sync and offload, an offload command without offload mode, or fine-grained power management outside a power-managed offload configuration.
 
 The command-line utility groups install `ack`, `ripgrep`, and `fd` through `modules.programs.cli.search`, and `coreutils` plus `pciutils` through `modules.programs.cli.system`.
 
@@ -225,15 +236,37 @@ The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not insta
 
 Unmatched normal applications default to `dumpster`; later application-specific rules override that fallback. Use `Super+Ctrl+1` through `Super+Ctrl+7` to move the focused column to the corresponding named workspace.
 
+### ASUS portrait monitor layout
+
+Niri configures the external ASUS display on connector `DP-5` as a 2560×1440 output rotated 90 degrees counter-clockwise at position `(0, 0)`. Its explicit scale of `1` produces a 1440-pixel logical width after rotation. The built-in `eDP-1` panel uses 3840×2400 at scale `2`, producing a 1920×1200 logical area positioned at `(1440, 0)` immediately to the right. Niri calculates output placement in logical pixels after rotation and scaling.[1]
+
+| Output | Mode | Transform and scale | Logical position | Column behavior |
+|---|---|---|---|---|
+| `DP-5` | `2560x1440@59.91` | 90° counter-clockwise, scale 1 | `x=0 y=0` | New columns default to the full output width. |
+| `eDP-1` | `3840x2400@59.99` | Normal, scale 2 | `x=1440 y=0` | Uses the global widescreen column widths. |
+
+The per-output `layout` override prevents new windows on the portrait display from opening as narrow half-width columns while leaving the laptop’s existing one-third, one-half, two-thirds, and full-width presets unchanged. Niri applies configured output rules when a matching display connects; disconnecting `DP-5` leaves the laptop panel available independently.[1]
+
+Connector names and refresh rates come from the compositor and can change with a different dock or port. Verify the active names and exact modes after connecting the monitor:
+
+```sh
+niri msg outputs
+niri validate -c ~/.config/niri/config.kdl
+```
+
+If the ASUS display appears under a connector other than `DP-5`, update that output name. If Niri rejects either configured mode, replace its refresh rate with the exact value reported by `niri msg outputs`.
+
+[1]: https://niri-wm.github.io/niri/Configuration%3A-Outputs.html "Niri output configuration"
+
 ### Sunset-scheduled display warmth
 
 The problem with enabling a color-temperature service for every graphical session is that it can conflict with Plasma’s native Night Light. The Niri module therefore owns Gammastep and attaches it specifically to `niri.service`: it starts after Niri, stops with Niri, and also checks that `XDG_CURRENT_DESKTOP=niri`. Logging into Plasma does not start Gammastep.
 
-The reported failure did not mean that Wi-Fi was disabled. The evaluated host already uses NetworkManager with the compatible `wpa_supplicant` backend, Avahi is enabled, and GeoClue is configured to query BeaconDB. The current error means GeoClue received an empty access-point scan at lookup time. GeoClue uses nearby Wi-Fi identifiers for network location through `wpa_supplicant`; Avahi instead serves GeoClue’s network-NMEA source and is not required for ordinary Wi-Fi positioning.[1] [2]
+The reported failure did not mean that Wi-Fi was disabled. The evaluated host already uses NetworkManager with the compatible `wpa_supplicant` backend, Avahi is enabled, and GeoClue is configured to query BeaconDB. The current error means GeoClue received an empty access-point scan at lookup time. GeoClue uses nearby Wi-Fi identifiers for network location through `wpa_supplicant`; Avahi instead serves GeoClue’s network-NMEA source and is not required for ordinary Wi-Fi positioning.[2] [3]
 
 The `smunix` host keeps `locationProvider = "geoclue2"` as the primary path. Before launching Gammastep, a Niri-only wrapper asks NetworkManager for a fresh scan and waits up to five two-second attempts for at least one BSSID. It then gives GeoClue 20 seconds to resolve a location. If that probe still fails, Gammastep starts with the approximate J0N 1P0 coordinates instead of leaving the display without a sunset schedule. GeoClue’s unused NMEA, 3G, CDMA, and modem-GPS sources are disabled, removing the unrelated Avahi/NMEA warning while leaving Wi-Fi location active.
 
-Both the GeoClue agent and Gammastep are attached to `niri.service` and guarded by `XDG_CURRENT_DESKTOP=niri`; neither starts for Plasma. Gammastep keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Gammastep performs this twilight transition smoothly over roughly an hour.[3] Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
+Both the GeoClue agent and Gammastep are attached to `niri.service` and guarded by `XDG_CURRENT_DESKTOP=niri`; neither starts for Plasma. Gammastep keeps the display at a neutral `6500 K` during daylight, fades toward a warmer `3500 K` after sunset, and returns toward the daytime temperature around sunrise. Gammastep performs this twilight transition smoothly over roughly an hour.[4] Brightness remains at `1.0`, so the feature changes color temperature without reducing the physical backlight.
 
 | Option | Selected value | Purpose |
 |---|---:|---|
@@ -258,9 +291,9 @@ journalctl --user -b -u geoclue-agent -u gammastep
 
 When automatic lookup fails, the user journal records `Gammastep: GeoClue location unavailable; using configured manual fallback.` This is a controlled fallback rather than a service failure. Stopping Gammastep resets the color adjustment; starting it manually from Plasma is rejected by the Niri session condition. Plasma Night Light remains independently configurable through Plasma System Settings.
 
-[1]: https://man.archlinux.org/man/geoclue "GeoClue configuration manual"
-[2]: https://fedoramagazine.org/the-state-of-the-location-permission-on-fedora-linux-in-2025/ "GeoClue Wi-Fi positioning and wpa_supplicant"
-[3]: https://man.archlinux.org/man/gammastep.1.en "Gammastep color-temperature scheduling"
+[2]: https://man.archlinux.org/man/geoclue "GeoClue configuration manual"
+[3]: https://fedoramagazine.org/the-state-of-the-location-permission-on-fedora-linux-in-2025/ "GeoClue Wi-Fi positioning and wpa_supplicant"
+[4]: https://man.archlinux.org/man/gammastep.1.en "Gammastep color-temperature scheduling"
 
 ## Niri keybinding reference
 
@@ -423,7 +456,7 @@ The host’s filesystem, encryption, swap, and CPU declarations remain isolated 
 
 ## Network printer discovery
 
-The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[4] [5]
+The `smunix` host enables `modules.hardware.printing.networkDiscovery`. The printing module starts CUPS for local queue management, Avahi for multicast DNS and DNS-SD discovery, the IPv4 NSS plug-in for resolving printer names ending in `.local`, and `cups-browsed` for automatically creating queues from compatible network announcements.[5] [6]
 
 | Option | Default | Purpose |
 |---|---:|---|
@@ -477,8 +510,8 @@ mDNS discovery normally requires the computer and printer to share a multicast-c
 journalctl -b -u avahi-daemon -u cups-browsed -u cups
 ```
 
-[4]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
-[5]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
+[5]: https://openprinting.github.io/cups/doc/network.html "CUPS network printer guidance"
+[6]: https://avahi.org/ "Avahi multicast DNS and DNS-SD"
 
 ## Home Manager conflict backups
 
@@ -540,7 +573,7 @@ Verification is interactive and requests each configured finger in sequence. To 
 fingerprint-verify-configured left-index-finger right-index-finger
 ```
 
-The underlying fprintd commands remain available for individual operations:[6]
+The underlying fprintd commands remain available for individual operations:[7]
 
 ```sh
 fprintd-enroll -f right-index-finger
@@ -549,7 +582,7 @@ fprintd-verify -f right-index-finger
 fprintd-delete "$USER"
 ```
 
-Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[6] [7]
+Plasma can also enroll fingerprints through **System Settings → Users → Configure Fingerprint Authentication** when the reader is supported by libfprint. The CLI and desktop panel use the same fprintd database under `/var/lib/fprint/`; no biometric template is stored in this repository.[7] [8]
 
 Keep a root recovery shell open during initial testing. In another terminal, test interactive authentication before logging out:
 
@@ -563,8 +596,8 @@ sudo true
 
 Test the fingerprint, YubiKey, and password paths separately. If enrollment reports that no device is available, inspect the sensor with `lsusb` and `journalctl -u fprintd`; the standard module cannot make an unsupported reader work, and some sensors require a vendor-specific Touch OEM Driver package.
 
-[6]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
-[7]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
+[7]: https://man.archlinux.org/man/fprintd.1 "fprintd command-line utilities"
+[8]: https://fprint.freedesktop.org/fprintd-dev/Device.html "fprintd device interface and enrollment behavior"
 
 ## YubiKey authentication
 

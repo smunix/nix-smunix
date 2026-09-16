@@ -6,7 +6,43 @@
   cfg = config.modules.hardware.nvidia;
 in {
   options.modules.hardware.nvidia = {
-    enable = lib.mkEnableOption "NVIDIA PRIME offload graphics";
+    enable = lib.mkEnableOption "NVIDIA hybrid graphics";
+
+    powerManagement = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to preserve NVIDIA video memory across suspend and resume.";
+      };
+
+      finegrained = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to power down the NVIDIA GPU dynamically while PRIME offload is idle.";
+      };
+    };
+
+    prime = {
+      sync.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to use PRIME synchronization with the NVIDIA GPU driving the display session.";
+      };
+
+      offload = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to use PRIME render offload.";
+        };
+
+        enableOffloadCmd = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to install the nvidia-offload command for PRIME render offload.";
+        };
+      };
+    };
 
     intelBusId = lib.mkOption {
       type = lib.types.str;
@@ -33,23 +69,33 @@ in {
         assertion = cfg.nvidiaBusId != "";
         message = "NVIDIA PRIME requires the host-specific NVIDIA PCI bus ID.";
       }
+      {
+        assertion = !(cfg.prime.sync.enable && cfg.prime.offload.enable);
+        message = "NVIDIA PRIME sync and offload modes cannot be enabled at the same time.";
+      }
+      {
+        assertion = !cfg.prime.offload.enableOffloadCmd || cfg.prime.offload.enable;
+        message = "The NVIDIA offload command requires PRIME offload to be enabled.";
+      }
+      {
+        assertion = !cfg.powerManagement.finegrained || cfg.powerManagement.enable;
+        message = "NVIDIA fine-grained power management requires NVIDIA power management.";
+      }
+      {
+        assertion = !cfg.powerManagement.finegrained || cfg.prime.offload.enable;
+        message = "NVIDIA fine-grained power management requires PRIME offload mode.";
+      }
     ];
 
     hardware = {
       graphics.enable = true;
       nvidia = {
         modesetting.enable = true;
-        powerManagement = {
-          enable = true;
-          finegrained = true;
-        };
+        inherit (cfg) powerManagement;
         open = true;
         nvidiaSettings = true;
         prime = {
-          offload = {
-            enable = true;
-            enableOffloadCmd = true;
-          };
+          inherit (cfg.prime) sync offload;
           inherit (cfg) intelBusId nvidiaBusId;
         };
       };
