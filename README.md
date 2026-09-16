@@ -345,7 +345,7 @@ Tabbed mode changes how multiple windows in the **same column** are displayed; i
 | Select the previous tab | `Mod+K` or `Mod+Up` | Focus the previous window in the current column. |
 | Reorder a tab downward | `Mod+Ctrl+J` or `Mod+Ctrl+Down` | Move the focused window down within the current column. |
 | Reorder a tab upward | `Mod+Ctrl+K` or `Mod+Ctrl+Up` | Move the focused window up within the current column. |
-| Move to another column | `Mod+H`/`Mod+Left` or `Mod+L`/`Mod+Right` | Focus the column to the left or right rather than changing tabs. |
+| Move to another column | `Mod+H`/`Mod+Left` or `Mod+Right` | Focus the column to the left or right rather than changing tabs. `Super+L` is reserved for locking. |
 | Remove a window from the stack | `Mod+.` | Expel the focused window into its own column. |
 | Consume or expel by direction | `Mod+[` or `Mod+]` | Consume or expel the focused window toward the left or right column. |
 
@@ -365,7 +365,7 @@ A practical sequence is to place the desired windows on one workspace, use `Mod+
 | `Mod+Shift+,` | Toggle Noctalia settings. |
 | `Mod+Shift+D` | Toggle desktop-widget editing. |
 | `Alt+Tab` | Open the Noctalia window switcher. |
-| `Ctrl+Alt+L` or `Super+Alt+L` | Lock the session. |
+| `Super+L`, `Ctrl+Alt+L`, or `Super+Alt+L` | Lock the session through Noctalia. |
 
 ### Audio, media, and brightness
 
@@ -389,7 +389,7 @@ These hardware keys continue working while the session is locked.
 | Keys | Action |
 |---|---|
 | `Mod+Left` or `Mod+H` | Focus the column to the left. |
-| `Mod+Right` or `Mod+L` | Focus the column to the right. |
+| `Mod+Right` | Focus the column to the right; `Super+L` is reserved for locking. |
 | `Mod+Up` or `Mod+K` | Focus the window above in the current column. |
 | `Mod+Down` or `Mod+J` | Focus the window below in the current column. |
 | `Mod+Ctrl+Left` or `Mod+Ctrl+H` | Move the focused column left. |

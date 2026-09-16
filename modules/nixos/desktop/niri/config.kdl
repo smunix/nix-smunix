@@ -152,6 +152,7 @@ binds {
     Mod+Shift+Comma { spawn "noctalia" "msg" "settings-toggle"; }
     Mod+Shift+D { spawn "noctalia" "msg" "desktop-widgets-toggle-edit"; }
     Alt+Tab { spawn "noctalia" "msg" "window-switcher"; }
+    Super+L { spawn "noctalia" "msg" "session" "lock"; }
     Ctrl+Alt+L { spawn "noctalia" "msg" "session" "lock"; }
     Super+Alt+L { spawn "noctalia" "msg" "session" "lock"; }
 
@@ -175,7 +176,6 @@ binds {
     Mod+H { focus-column-left; }
     Mod+J { focus-window-down; }
     Mod+K { focus-window-up; }
-    Mod+L { focus-column-right; }
 
     Mod+Ctrl+Left { move-column-left; }
     Mod+Ctrl+Down { move-window-down; }
