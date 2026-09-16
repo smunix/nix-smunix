@@ -8,6 +8,8 @@
 }: let
   cfg = config.modules.desktop.niri;
   niriPackages = inputs.niri.packages.${system};
+  niriPackage = niriPackages."niri-${cfg.packageChannel}";
+  xwaylandSatellitePackage = niriPackages."xwayland-satellite-${cfg.packageChannel}";
   noctaliaPackage = inputs.noctalia.packages.${system}.default;
   fontScale = config.modules.desktop.fonts.compact.factor;
   qtFontSize = 10.0 * fontScale;
@@ -21,6 +23,31 @@
     lockBeforeSuspend = cfg.screenLock.lockOnSuspend;
     inherit fontScale wallpaper wallpaperDirectory;
   };
+  externalLayoutConfig =
+    lib.optionalString cfg.monitorLayout.external.fullWidthColumns
+    "    layout {\n        default-column-width { proportion 1.0; }\n    }\n";
+  monitorConfig = lib.optionalString cfg.monitorLayout.enable ''
+    // External portrait display on the left.
+    output "${cfg.monitorLayout.external.connector}" {
+        mode "${cfg.monitorLayout.external.mode}"
+        scale ${toString cfg.monitorLayout.external.scale}
+        transform "${cfg.monitorLayout.external.transform}"
+        position x=${toString cfg.monitorLayout.external.position.x} y=${toString cfg.monitorLayout.external.position.y}
+
+    ${externalLayoutConfig}    }
+
+    // Built-in HiDPI panel on the right.
+    output "${cfg.monitorLayout.internal.connector}" {
+        mode "${cfg.monitorLayout.internal.mode}"
+        scale ${toString cfg.monitorLayout.internal.scale}
+        transform "${cfg.monitorLayout.internal.transform}"
+        position x=${toString cfg.monitorLayout.internal.position.x} y=${toString cfg.monitorLayout.internal.position.y}
+    }
+  '';
+  niriConfig = pkgs.writeText "niri-config.kdl" ''
+    ${monitorConfig}
+    ${builtins.readFile ./niri/config.kdl}
+  '';
   gammastepManualFallbackConfig = pkgs.writeText "gammastep-manual-fallback.ini" ''
     [general]
     temp-day=${toString cfg.gammastep.dayTemperature}
@@ -71,6 +98,112 @@ in {
   options.modules.desktop.niri = {
     enable =
       lib.mkEnableOption "the Niri Wayland compositor with the Noctalia desktop shell";
+
+    packageChannel = lib.mkOption {
+      type = lib.types.enum [
+        "stable"
+        "unstable"
+      ];
+      default = "stable";
+      description = "Which package channel from the pinned Niri flake to use.";
+    };
+
+    monitorLayout = {
+      enable = lib.mkEnableOption "the configured external and internal Niri output layout";
+
+      external = {
+        connector = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "DP-5";
+          description = "Connector name of the external portrait display.";
+        };
+        mode = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "2560x1440@59.91";
+          description = "Mode selected for the external portrait display.";
+        };
+        scale = lib.mkOption {
+          type = lib.types.numbers.between 0.1 10.0;
+          default = 1;
+          description = "Scale factor for the external portrait display.";
+        };
+        transform = lib.mkOption {
+          type = lib.types.enum [
+            "normal"
+            "90"
+            "180"
+            "270"
+            "flipped"
+            "flipped-90"
+            "flipped-180"
+            "flipped-270"
+          ];
+          default = "90";
+          description = "Counter-clockwise transform applied to the external display.";
+        };
+        position = {
+          x = lib.mkOption {
+            type = lib.types.int;
+            default = 0;
+            description = "External display X position in logical pixels.";
+          };
+          y = lib.mkOption {
+            type = lib.types.int;
+            default = 0;
+            description = "External display Y position in logical pixels.";
+          };
+        };
+        fullWidthColumns = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether new columns default to the full external output width.";
+        };
+      };
+
+      internal = {
+        connector = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "eDP-1";
+          description = "Connector name of the built-in display.";
+        };
+        mode = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          default = "3840x2400@59.99";
+          description = "Mode selected for the built-in display.";
+        };
+        scale = lib.mkOption {
+          type = lib.types.numbers.between 0.1 10.0;
+          default = 2;
+          description = "Scale factor for the built-in display.";
+        };
+        transform = lib.mkOption {
+          type = lib.types.enum [
+            "normal"
+            "90"
+            "180"
+            "270"
+            "flipped"
+            "flipped-90"
+            "flipped-180"
+            "flipped-270"
+          ];
+          default = "normal";
+          description = "Transform applied to the built-in display.";
+        };
+        position = {
+          x = lib.mkOption {
+            type = lib.types.int;
+            default = 1440;
+            description = "Built-in display X position in logical pixels.";
+          };
+          y = lib.mkOption {
+            type = lib.types.int;
+            default = 0;
+            description = "Built-in display Y position in logical pixels.";
+          };
+        };
+      };
+    };
 
     gammastep = {
       enable = lib.mkEnableOption "sunset-scheduled warm display colors in Niri";
@@ -151,6 +284,16 @@ in {
   config = lib.mkIf cfg.enable {
     assertions = [
       {
+        assertion = !cfg.monitorLayout.enable || cfg.packageChannel == "unstable";
+        message = "Niri per-output layout overrides require packageChannel = \"unstable\" with the pinned Niri flake.";
+      }
+      {
+        assertion =
+          !cfg.monitorLayout.enable
+          || cfg.monitorLayout.external.connector != cfg.monitorLayout.internal.connector;
+        message = "Niri external and internal outputs must use different connector names.";
+      }
+      {
         assertion =
           !cfg.gammastep.enable
           || (
@@ -166,7 +309,7 @@ in {
     programs = {
       niri = {
         enable = true;
-        package = niriPackages.niri-stable;
+        package = niriPackage;
       };
 
       noctalia = {
@@ -250,7 +393,7 @@ in {
       wireplumber
       wl-clipboard
       xterm
-      niriPackages.xwayland-satellite-stable
+      xwaylandSatellitePackage
     ];
 
     hm = {
@@ -332,7 +475,7 @@ in {
       };
 
       xdg.configFile = {
-        "niri/config.kdl".source = ./niri/config.kdl;
+        "niri/config.kdl".source = niriConfig;
         "qt6ct/qt6ct.conf".text = ''
           [Appearance]
           custom_palette=false

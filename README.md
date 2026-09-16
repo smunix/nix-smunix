@@ -125,6 +125,31 @@ modules = {
     plasma.enable = true;
     niri = {
       enable = true;
+      packageChannel = "unstable";
+      monitorLayout = {
+        enable = true;
+        external = {
+          connector = "DP-5";
+          mode = "2560x1440@59.91";
+          scale = 1;
+          transform = "90";
+          position = {
+            x = 0;
+            y = 0;
+          };
+          fullWidthColumns = true;
+        };
+        internal = {
+          connector = "eDP-1";
+          mode = "3840x2400@59.99";
+          scale = 2;
+          transform = "normal";
+          position = {
+            x = 1440;
+            y = 0;
+          };
+        };
+      };
       gammastep = {
         enable = true;
         locationProvider = "geoclue2";
@@ -238,14 +263,16 @@ Unmatched normal applications default to `dumpster`; later application-specific 
 
 ### ASUS portrait monitor layout
 
-Niri configures the external ASUS display on connector `DP-5` as a 2560×1440 output rotated 90 degrees counter-clockwise at position `(0, 0)`. Its explicit scale of `1` produces a 1440-pixel logical width after rotation. The built-in `eDP-1` panel uses 3840×2400 at scale `2`, producing a 1920×1200 logical area positioned at `(1440, 0)` immediately to the right. Niri calculates output placement in logical pixels after rotation and scaling.[1]
+The previously selected stable Niri `25.08` rejects `layout` inside an `output` block because per-output layout overrides were introduced in Niri `25.11`.[1] The reusable module now exposes `packageChannel = "stable" | "unstable"` and asserts that `monitorLayout.enable` may be used only with the pinned unstable package. `smunix` selects `niri-unstable` from the existing flake input, while hosts that do not need per-output layout overrides retain the stable default.
+
+The module generates the output fragment from typed `monitorLayout` options instead of hard-coding version-dependent syntax in the stable-compatible base KDL. It configures the external ASUS display on connector `DP-5` as a 2560×1440 output rotated 90 degrees counter-clockwise at position `(0, 0)`. Its explicit scale of `1` produces a 1440-pixel logical width after rotation. The built-in `eDP-1` panel uses 3840×2400 at scale `2`, producing a 1920×1200 logical area positioned at `(1440, 0)` immediately to the right. Niri calculates output placement in logical pixels after rotation and scaling.[1]
 
 | Output | Mode | Transform and scale | Logical position | Column behavior |
 |---|---|---|---|---|
 | `DP-5` | `2560x1440@59.91` | 90° counter-clockwise, scale 1 | `x=0 y=0` | New columns default to the full output width. |
 | `eDP-1` | `3840x2400@59.99` | Normal, scale 2 | `x=1440 y=0` | Uses the global widescreen column widths. |
 
-The per-output `layout` override prevents new windows on the portrait display from opening as narrow half-width columns while leaving the laptop’s existing one-third, one-half, two-thirds, and full-width presets unchanged. Niri applies configured output rules when a matching display connects; disconnecting `DP-5` leaves the laptop panel available independently.[1]
+The generated per-output `layout` override prevents new windows on the portrait display from opening as narrow half-width columns while leaving the laptop’s existing one-third, one-half, two-thirds, and full-width presets unchanged. Niri applies configured output rules when a matching display connects; disconnecting `DP-5` leaves the laptop panel available independently.[1]
 
 Connector names and refresh rates come from the compositor and can change with a different dock or port. Verify the active names and exact modes after connecting the monitor:
 
@@ -254,7 +281,7 @@ niri msg outputs
 niri validate -c ~/.config/niri/config.kdl
 ```
 
-If the ASUS display appears under a connector other than `DP-5`, update that output name. If Niri rejects either configured mode, replace its refresh rate with the exact value reported by `niri msg outputs`.
+If the ASUS display appears under a connector other than `DP-5`, update `modules.desktop.niri.monitorLayout.external.connector`. If Niri rejects either configured mode, replace the corresponding typed `monitorLayout` mode with the exact refresh rate reported by `niri msg outputs`. Do not move the generated per-output `layout` block back into the base KDL while using the stable package.
 
 [1]: https://niri-wm.github.io/niri/Configuration%3A-Outputs.html "Niri output configuration"
 

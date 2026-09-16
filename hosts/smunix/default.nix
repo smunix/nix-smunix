@@ -125,6 +125,31 @@
       };
       niri = {
         enable = true;
+        packageChannel = "unstable";
+        monitorLayout = {
+          enable = true;
+          external = {
+            connector = "DP-5";
+            mode = "2560x1440@59.91";
+            scale = 1;
+            transform = "90";
+            position = {
+              x = 0;
+              y = 0;
+            };
+            fullWidthColumns = true;
+          };
+          internal = {
+            connector = "eDP-1";
+            mode = "3840x2400@59.99";
+            scale = 2;
+            transform = "normal";
+            position = {
+              x = 1440;
+              y = 0;
+            };
+          };
+        };
         gammastep = {
           enable = true;
           locationProvider = "geoclue2";
