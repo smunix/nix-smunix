@@ -12,6 +12,7 @@ in {
   config = lib.mkIf cfg.enable {
     user.packages = with pkgs; [
       cargo
+      cargo-generate
       clippy
       rust-analyzer
       rustc
