@@ -55,7 +55,7 @@ This document summarizes the reusable modules and composition helpers in this co
 |---|---|---|
 | C and C++ | `modules.develop.cc.enable` | Provides GCC, Clang, CMake, Make, GDB, pkg-config, and Clang tooling. |
 | Rust | `modules.develop.rust.enable`, `.nightlyVersion`, `.toolchain` | Resolves one configurable rust-overlay nightly for the host, including Cargo, rustc, rustfmt, Clippy, rust-analyzer, and `rust-src`; the read-only `toolchain` package is shared with dependent modules. |
-| Aya/eBPF | `modules.develop.aya.enable`, `.vm.enable` | Requires the Rust module and reuses its configured nightly and cargo-generate through `aya-cargo` and `aya-rustc`; also provides exact `bpf-linker` 0.11.1, bpftool, pahole, LLVM, tcpdump, and KVM access. The optional `ebpf-vm` command launches an isolated BPF/BTF/BPF-LSM NixOS laboratory, mounts its required `--shared-directory` path at `/host`, and forwards host loopback port 2222 to dev-only guest SSH while denying root SSH. |
+| Aya/eBPF | `modules.develop.aya.enable`, `.vm.enable` | Requires the Rust module and reuses its configured nightly and cargo-generate through `aya-cargo` and `aya-rustc`; also provides pinned `aya-tool`, exact `bpf-linker` 0.11.1, bpftool, pahole, LLVM, tcpdump, and KVM access. The same `aya-tool` package is installed inside the VM. The optional `ebpf-vm` command launches an isolated BPF/BTF/BPF-LSM NixOS laboratory, mounts its required `--shared-directory` path at `/host`, and forwards host loopback port 2222 to dev-only guest SSH while denying root SSH. |
 | Haskell | `modules.develop.haskell.enable` | Provides GHC, Cabal, Haskell Language Server, and HLint. |
 | Python | `modules.develop.python.enable` | Provides Python 3, uv, Ruff, and Pyright. |
 | Typst | `modules.develop.typst.enable` | Provides Typst, the Tinymist language server, and Typstyle formatter. |
@@ -98,7 +98,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Unstable package overlay | `overlays/unstable-packages.nix` | Exposes the pinned unstable package set under the configured overlay. |
 | Kimi Code overlay | `overlays/kimi-code.nix` | Exposes the upstream package as `pkgs.kimi-code` to the host module graph. |
 | OBS and NDI compatibility overlay | `overlays/obs-plugins.nix` | Replaces only the stale `ndi-6` source hash, rebuilds DistroAV against that corrected SDK derivation, and exposes it as `pkgs.obs-studio-plugins.obs-ndi`. |
-| Custom package set | `pkgs/default.nix` | Exports the exact Aya `bpf-linker` package through the additions overlay. Per-system outputs additionally expose the Aya/eBPF NixOS VM and `ebpf-vm` launcher on x86_64 Linux. |
+| Custom package set | `pkgs/default.nix` | Exports the pinned Aya `aya-tool` and exact `bpf-linker` packages through the additions overlay. Per-system outputs additionally expose the Aya/eBPF NixOS VM and `ebpf-vm` launcher on x86_64 Linux. |
 
 ## Feature selection
 

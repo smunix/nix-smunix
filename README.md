@@ -851,7 +851,7 @@ Do not commit passwords, API tokens, recovery codes, private SSH keys, age ident
 
 ## Aya and eBPF development
 
-The problem with developing eBPF directly on the workstation is that loading test programs requires elevated kernel access and a failed program can disturb host networking or security hooks. `modules.develop.aya` therefore installs the build and inspection tools on `smunix`, while `ebpf-vm` runs programs in a disposable NixOS VM with the required BPF kernel features. Aya development requires Rust nightly with `rust-src`, `bpf-linker`, `cargo-generate`, and `bpftool`.[11]
+The problem with developing eBPF directly on the workstation is that loading test programs requires elevated kernel access and a failed program can disturb host networking or security hooks. `modules.develop.aya` therefore installs the build and inspection tools on `smunix`, while `ebpf-vm` runs programs in a disposable NixOS VM with the required BPF kernel features. Aya development requires Rust nightly with `rust-src`, `bpf-linker`, `cargo-generate`, and `bpftool`.[11] The `aya-tool` command generates Rust bindings for selected Linux kernel types and requires both `bpftool` and `bindgen`; the packaged wrapper supplies those dependencies automatically.[13]
 
 The Rust module is the single owner of the host toolchain version. `modules.develop.rust.nightlyVersion = "2026-07-15"` resolves a rust-overlay toolchain containing Cargo, rustc, rustfmt, Clippy, rust-analyzer, and `rust-src`. Aya requires the Rust module and reuses its read-only resolved `toolchain`; it no longer has a separate version option that can drift out of sync with the linker.
 
@@ -860,6 +860,7 @@ The Rust module is the single owner of the host toolchain version. `modules.deve
 | Rust toolchain | Shared `modules.develop.rust.nightlyVersion = "2026-07-15"`, with `rust-src`, rustfmt, Clippy, and rust-analyzer |
 | BPF linker | Official static `bpf-linker` 0.11.1 x86_64-musl artifact with the supplied fixed hash |
 | Build command | `aya-cargo`, with `ebpf-cargo` as a shell alias |
+| Kernel bindings | `aya-tool` with wrapped `bpftool`, `bindgen`, and libclang dependencies; installed on both the host and VM |
 | Inspection tools | `bpftool`, `pahole`, `llvm-objdump`, and `tcpdump` |
 | Virtualization access | The primary user is added to `kvm`; log out and back in after activation |
 | Guest resources | Four virtual CPUs and 4096 MiB RAM |
@@ -874,6 +875,14 @@ aya-cargo clippy
 aya-rustc --version
 bpf-linker --version
 bpftool version
+aya-tool --help
+```
+
+Generate bindings for one or more kernel types on either the host or inside `ebpf-vm`:
+
+```sh
+aya-tool generate task_struct > vmlinux.rs
+aya-tool generate task_struct dentry > vmlinux.rs
 ```
 
 The `ebpf-vm` command requires the named `--shared-directory` parameter. Relative paths are canonicalized before the generated NixOS VM runner changes into its temporary working directory:
@@ -910,7 +919,7 @@ ssh-keygen -R '[127.0.0.1]:2222'
 ssh -o StrictHostKeyChecking=accept-new -p 2222 dev@127.0.0.1
 ```
 
-The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `bpftool`, `pahole`, `iproute2`, and `tcpdump`. **The `dev`/`dev` credentials, passwordless sudo, and root console autologin are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
+The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `aya-tool`, `bpftool`, `pahole`, `iproute2`, and `tcpdump`. **The `dev`/`dev` credentials, passwordless sudo, and root console autologin are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
 
 Inside the VM, inspect the environment with:
 
@@ -926,3 +935,4 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 
 [11]: https://aya-rs.dev/book/start/development.html "Aya development environment"
 [12]: https://nixos.org/manual/nixos/stable/#sec-qemu-vm "NixOS QEMU virtual machines"
+[13]: https://aya-rs.dev/book/aya/aya-tool.html "Using aya-tool"

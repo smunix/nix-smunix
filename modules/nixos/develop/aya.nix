@@ -48,6 +48,7 @@ in {
         [
           ayaCargo
           ayaRustc
+          pkgs.aya-tool
           pkgs.bpf-linker-aya
           pkgs.bpftools
           pkgs.llvmPackages.llvm

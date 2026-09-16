@@ -59,6 +59,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    aya-tool
     bpftools
     iproute2
     pahole

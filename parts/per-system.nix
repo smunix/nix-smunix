@@ -4,12 +4,15 @@
     system,
     ...
   }: let
-    customPackages = import ../pkgs pkgs;
+    rustPkgs = pkgs.extend inputs.rust-overlay.overlays.default;
+    customPackages = import ../pkgs rustPkgs;
+    projectPkgs = rustPkgs.extend (_final: _prev: customPackages);
     ayaVmPackages =
       if system == "x86_64-linux"
       then
         import ../pkgs/aya-vm-package.nix {
-          inherit pkgs system;
+          pkgs = projectPkgs;
+          inherit system;
           flakePath = ../.;
           nixpkgs = inputs.nixpkgs;
         }
