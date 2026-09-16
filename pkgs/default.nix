@@ -1,5 +1,4 @@
-# Custom packages, that can be defined similarly to ones from nixpkgs
-# You can build them using 'nix build .#example'
-_pkgs: {
-  # example = _pkgs.callPackage ./example { };
+# Custom packages exported through the additions overlay and per-system outputs.
+pkgs: {
+  bpf-linker-aya = pkgs.callPackage ./bpf-linker.nix {};
 }

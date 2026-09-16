@@ -72,10 +72,14 @@
     };
 
     develop = {
+      aya.enable = true;
       cc.enable = true;
       haskell.enable = true;
       python.enable = true;
-      rust.enable = true;
+      rust = {
+        enable = true;
+        nightlyVersion = "2026-07-15";
+      };
       typst.enable = true;
     };
 

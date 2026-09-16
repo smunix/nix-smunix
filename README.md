@@ -64,10 +64,14 @@ modules = {
   };
 
   develop = {
+    aya.enable = true;
     cc.enable = true;
     haskell.enable = true;
     python.enable = true;
-    rust.enable = true;
+    rust = {
+      enable = true;
+      nightlyVersion = "2026-07-15";
+    };
     typst.enable = true;
     # quarto.enable = true;
   };
@@ -844,3 +848,61 @@ sops:
 ```
 
 Do not commit passwords, API tokens, recovery codes, private SSH keys, age identity files, unencrypted application configurations, environment files, or decrypted SOPS output. A private repository controls remote access but does not encrypt the flake source after checkout; Nix copies input source files into the local Nix store during evaluation. The plain U2F mapping contains a credential handle and public key rather than the authenticator’s private key, but it still reveals identity and device metadata and should remain private.
+
+## Aya and eBPF development
+
+The problem with developing eBPF directly on the workstation is that loading test programs requires elevated kernel access and a failed program can disturb host networking or security hooks. `modules.develop.aya` therefore installs the build and inspection tools on `smunix`, while `ebpf-vm` runs programs in a disposable NixOS VM with the required BPF kernel features. Aya development requires Rust nightly with `rust-src`, `bpf-linker`, `cargo-generate`, and `bpftool`.[11]
+
+The Rust module is the single owner of the host toolchain version. `modules.develop.rust.nightlyVersion = "2026-07-15"` resolves a rust-overlay toolchain containing Cargo, rustc, rustfmt, Clippy, rust-analyzer, and `rust-src`. Aya requires the Rust module and reuses its read-only resolved `toolchain`; it no longer has a separate version option that can drift out of sync with the linker.
+
+| Component | Selected implementation |
+|---|---|
+| Rust toolchain | Shared `modules.develop.rust.nightlyVersion = "2026-07-15"`, with `rust-src`, rustfmt, Clippy, and rust-analyzer |
+| BPF linker | Official static `bpf-linker` 0.11.1 x86_64-musl artifact with the supplied fixed hash |
+| Build command | `aya-cargo`, with `ebpf-cargo` as a shell alias |
+| Inspection tools | `bpftool`, `pahole`, `llvm-objdump`, and `tcpdump` |
+| Virtualization access | The primary user is added to `kvm`; log out and back in after activation |
+| Guest resources | Four virtual CPUs and 4096 MiB RAM |
+| Shared source | The requested host directory is mounted at `/host` through VirtFS/9P[12] |
+
+Plain `cargo`, `rustc`, `rustfmt`, `clippy`, and `rust-analyzer` use the configured nightly throughout the host. `aya-cargo` is the eBPF-specific wrapper: it selects that same nightly explicitly, exports its Rust source tree, and puts the exact `bpf-linker` first on `PATH`:
+
+```sh
+aya-cargo build
+aya-cargo clippy
+aya-rustc --version
+bpf-linker --version
+bpftool version
+```
+
+The `ebpf-vm` command requires the named `--shared-directory` parameter. Relative paths are canonicalized before the generated NixOS VM runner changes into its temporary working directory:
+
+```sh
+ebpf-vm --shared-directory "$PWD"
+ebpf-vm --shared-directory="$HOME/src/my-aya-project"
+```
+
+The selected directory appears as `/host` inside the guest. Any arguments after `--` are passed to QEMU:
+
+```sh
+ebpf-vm --shared-directory "$PWD" -- -nographic
+```
+
+The launcher rejects a missing parameter, nonexistent directory, or unknown option before QEMU starts. Its built-in reference is available with `ebpf-vm --help`.
+
+The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `bpftool`, `pahole`, `iproute2`, `tcpdump`, a `dev` account with password `dev`, passwordless sudo for its wheel group, and root console autologin. **These credentials and privileges are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
+
+Inside the VM, inspect the environment with:
+
+```sh
+cd /host
+uname -a
+bpftool feature probe kernel
+bpftool btf show
+cat /sys/kernel/security/lsm
+```
+
+The first VM invocation may build or download a substantial NixOS and QEMU closure. Later launches reuse the Nix store and are faster. Stop the VM normally with `poweroff` from the guest.
+
+[11]: https://aya-rs.dev/book/start/development.html "Aya development environment"
+[12]: https://nixos.org/manual/nixos/stable/#sec-qemu-vm "NixOS QEMU virtual machines"
