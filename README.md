@@ -865,7 +865,7 @@ The Rust module is the single owner of the host toolchain version. `modules.deve
 | Virtualization access | The primary user is added to `kvm`; log out and back in after activation |
 | Guest resources | Four virtual CPUs and 4096 MiB RAM |
 | Shared source | The requested host directory is mounted at `/host` through VirtFS/9P[12] |
-| SSH access | Host loopback `127.0.0.1:2222` forwards to guest TCP port 22; only `dev` may log in |
+| SSH access | Host loopback `127.0.0.1:2222` forwards to guest TCP port 22; only `dev` may log in, with automatic host public-key authorization and `dev` password fallback |
 
 Plain `cargo`, `rustc`, `rustfmt`, `clippy`, and `rust-analyzer` use the configured nightly throughout the host. `aya-cargo` is the eBPF-specific wrapper: it selects that same nightly explicitly, exports its Rust source tree, and puts the exact `bpf-linker` first on `PATH`:
 
@@ -885,12 +885,21 @@ aya-tool generate task_struct > vmlinux.rs
 aya-tool generate task_struct dentry > vmlinux.rs
 ```
 
-The `ebpf-vm` command requires the named `--shared-directory` parameter. Relative paths are canonicalized before the generated NixOS VM runner changes into its temporary working directory:
+The `ebpf-vm` command requires the named `--shared-directory` parameter. Relative paths are canonicalized before the generated NixOS VM runner changes into its temporary working directory. The launcher automatically selects the first public key present in `~/.ssh/id_ed25519.pub`, `id_ed25519_sk.pub`, `id_ecdsa.pub`, `id_ecdsa_sk.pub`, or `id_rsa.pub` and authorizes it for the guest `dev` account:
 
 ```sh
 ebpf-vm --shared-directory "$PWD"
 ebpf-vm --shared-directory="$HOME/src/my-aya-project"
 ```
+
+Select another public key explicitly either by option or environment variable:
+
+```sh
+ebpf-vm --shared-directory "$PWD" --ssh-public-key "$HOME/.ssh/work.pub"
+EBPF_VM_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/work.pub" ebpf-vm --shared-directory "$PWD"
+```
+
+The selected file must contain exactly one valid OpenSSH public key. The public key becomes part of the generated VM configuration and may be stored in the Nix store; the launcher never reads or copies the corresponding private key. Use `--no-ssh-key` to disable injection for one launch and retain password-only access.
 
 The selected directory appears as `/host` inside the guest. Any arguments after `--` are passed to QEMU:
 
@@ -900,15 +909,21 @@ ebpf-vm --shared-directory "$PWD" -- -nographic
 
 The launcher rejects a missing parameter, nonexistent directory, or unknown option before QEMU starts. Its built-in reference is available with `ebpf-vm --help`.
 
-After the VM reaches its login prompt, connect from the host through the loopback-only forwarded port:
+After the VM reaches its login prompt, connect from the host through the loopback-only forwarded port. OpenSSH should use the automatically authorized matching private key:
 
 ```sh
 ssh -o StrictHostKeyChecking=accept-new -p 2222 dev@127.0.0.1
 ```
 
+For an explicitly selected key whose private half is not a standard SSH identity filename, pass that private-key path when connecting:
+
+```sh
+ssh -o StrictHostKeyChecking=accept-new -i "$HOME/.ssh/work" -p 2222 dev@127.0.0.1
+```
+
 | SSH user | Password | Access policy |
 |---|---|---|
-| `dev` | `dev` | Allowed; this account belongs to `wheel` and has passwordless sudo inside the disposable VM |
+| `dev` | `dev` | Allowed; the injected host public key is preferred, while this password remains a recovery path. The account belongs to `wheel` and has passwordless sudo inside the disposable VM |
 | `root` | None for SSH | Denied by `PermitRootLogin = "no"`; root autologin remains available only on the VM console |
 | Any other account | Not applicable | Denied by the explicit OpenSSH `AllowUsers dev` policy |
 

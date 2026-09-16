@@ -3,7 +3,9 @@
   modulesPath,
   pkgs,
   ...
-}: {
+}: let
+  hostSshPublicKey = builtins.getEnv "AYA_SSH_PUBLIC_KEY";
+in {
   imports = ["${modulesPath}/virtualisation/qemu-vm.nix"];
 
   networking.hostName = "aya-ebpf-lab";
@@ -40,6 +42,7 @@
     uid = 1001;
     initialPassword = "dev";
     extraGroups = ["wheel"];
+    openssh.authorizedKeys.keys = lib.optional (hostSshPublicKey != "") hostSshPublicKey;
   };
 
   security.sudo = {
