@@ -77,6 +77,7 @@
       dioxus = {
         enable = true;
         desktop.enable = true;
+        web.enable = true;
         android = {
           enable = true;
           platformVersion = "35";

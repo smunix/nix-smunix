@@ -69,6 +69,7 @@ modules = {
     dioxus = {
       enable = true;
       desktop.enable = true;
+      web.enable = true;
       android = {
         enable = true;
         platformVersion = "35";
@@ -974,20 +975,40 @@ cat /sys/kernel/security/lsm
 
 The first VM invocation may build or download a substantial NixOS and QEMU closure. Later launches reuse the Nix store and are faster. Stop the VM normally with `poweroff` from the guest.
 
-## Dioxus desktop and Android development
+## Dioxus desktop, web, and Android development
 
 `modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive WebKitGTK 4.1, DBus development metadata and runtime libraries, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15]
 
 | Component | Selected implementation |
 |---|---|
 | Dioxus CLI | Reproducibly packaged `dioxus-cli` 0.8.0-alpha.1, exposed as `dx`; automatic tool downloads and telemetry are disabled |
-| Rust toolchain | Shared nightly `2026-07-15` (Rust 1.99), satisfying the CLI’s Rust 1.93 minimum and extended declaratively with all four Android targets |
+| Rust toolchain | Shared nightly `2026-07-15` (Rust 1.99), satisfying the CLI’s Rust 1.93 minimum and extended declaratively with WebAssembly plus all four Android targets |
+| Web | `wasm32-unknown-unknown`, matching `wasm-bindgen-cli` 0.2.121, and Binaryen `wasm-opt` |
 | Android Studio | 2025.3.4.7 |
 | Android platform and Build Tools | API 35 and Build Tools 35.0.0 |
 | NDK and CMake | NDK 27.2.12479018 and CMake 3.22.1 |
 | Emulator | Android emulator 36.5.11 with a Google APIs API-35 x86_64 system image |
 | Java | OpenJDK 17 |
 | Hardware acceleration | The primary user belongs to `kvm`; log out and back in after activation |
+
+Without `wasm32-unknown-unknown` in the active Rust sysroot, `dx serve --platform web` attempts `rustup target add`. Nix-managed hosts do not install or mutate toolchains through rustup, so that fallback fails with `No such file or directory`. Enabling `modules.develop.dioxus.web` adds the target to the shared rust-overlay toolchain and installs `wasm-opt` declaratively. The pinned `dx` wrapper already supplies the matching `wasm-bindgen` helper.
+
+Verify web tooling after rebuilding:
+
+```sh
+rustc --print target-libdir --target wasm32-unknown-unknown
+wasm-bindgen --version
+wasm-opt --version
+```
+
+Run the web application with hot reload:
+
+```sh
+cd ~/Projects/demos/damabase/project
+dx serve --platform web -p damabase-app
+```
+
+Do **not** run `rustup target add wasm32-unknown-unknown`; change `modules.develop.dioxus.web` or the shared Rust target list instead.
 
 After rebuilding, inspect the installation:
 
@@ -1065,7 +1086,7 @@ Dioxus also accepts the explicit platform form where supported by the project an
 dx serve --platform android
 ```
 
-The first rebuild is large because Android Studio, the SDK, NDK, emulator, system image, WebKitGTK, and four Rust target libraries enter the system closure. Subsequent builds reuse the Nix store.
+The first rebuild is large because Android Studio, the SDK, NDK, emulator, system image, WebKitGTK, Binaryen, and five Rust target libraries enter the system closure. Subsequent builds reuse the Nix store.
 
 [11]: https://aya-rs.dev/book/start/development.html "Aya development environment"
 [12]: https://nixos.org/manual/nixos/stable/#sec-qemu-vm "NixOS QEMU virtual machines"

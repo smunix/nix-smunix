@@ -1,4 +1,5 @@
 {
+  binaryen,
   cacert,
   esbuild,
   fetchCrate,
@@ -55,6 +56,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     wrapProgram "$out/bin/dx" \
       --suffix PATH : ${
       lib.makeBinPath [
+        binaryen
         esbuild
         wasm-bindgen-cli_0_2_121
       ]

@@ -84,6 +84,23 @@ in {
       description = "Install and configure Linux dependencies for Dioxus desktop applications.";
     };
 
+    web = {
+      enable = lib.mkEnableOption "Dioxus web development tools";
+
+      rustTarget = lib.mkOption {
+        type = lib.types.enum ["wasm32-unknown-unknown"];
+        default = "wasm32-unknown-unknown";
+        description = "Rust WebAssembly target added to the shared rust-overlay toolchain.";
+      };
+
+      wasmOptPackage = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.binaryen;
+        defaultText = lib.literalExpression "pkgs.binaryen";
+        description = "Binaryen package that supplies wasm-opt for Dioxus web builds.";
+      };
+    };
+
     android = {
       enable = lib.mkEnableOption "Dioxus Android development tools";
 
@@ -204,6 +221,11 @@ in {
         ]
         ++ desktopPackages
         ++ desktopDevelopmentOutputs;
+    })
+
+    (lib.mkIf cfg.web.enable {
+      modules.develop.rust.targets = lib.mkAfter [cfg.web.rustTarget];
+      user.packages = [cfg.web.wasmOptPackage];
     })
 
     (lib.mkIf cfg.android.enable {
