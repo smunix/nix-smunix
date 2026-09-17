@@ -976,7 +976,7 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 
 ## Dioxus desktop and Android development
 
-`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive WebKitGTK 4.1, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15]
+`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive WebKitGTK 4.1, DBus development metadata and runtime libraries, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15]
 
 | Component | Selected implementation |
 |---|---|
@@ -1011,6 +1011,14 @@ The Dioxus 0.8 CLI also provides the shorthand form.[17]
 ```sh
 dx serve --desktop
 ```
+
+If a Rust dependency reports that `dbus-1.pc` is missing, verify that the wrapped desktop environment resolves it before rebuilding the application:
+
+```sh
+pkg-config --modversion dbus-1
+```
+
+The Dioxus module places DBus's development output in `PKG_CONFIG_PATH` and its runtime output in `LD_LIBRARY_PATH`, so this command should print the packaged DBus version without manual `nix-shell` or global environment changes.
 
 Plain Cargo remains an alternative without the same integrated development server:
 

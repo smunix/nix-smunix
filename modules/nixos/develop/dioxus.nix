@@ -15,6 +15,7 @@
   ];
 
   desktopPackages = with pkgs; [
+    dbus
     libayatana-appindicator
     librsvg
     openssl
@@ -23,6 +24,7 @@
   ];
   desktopRuntimeLibraries = map lib.getLib desktopPackages;
   desktopDevelopmentOutputs = map lib.getDev (with pkgs; [
+    dbus
     libayatana-appindicator
     librsvg
     openssl
