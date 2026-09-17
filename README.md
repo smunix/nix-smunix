@@ -72,6 +72,12 @@ modules = {
         enable = true;
         libclangPackage = pkgs.llvmPackages.libclang;
       };
+      developmentServer = {
+        enable = true;
+        address = "0.0.0.0";
+        port = 8080;
+        openFirewall = true;
+      };
       web = {
         enable = true;
         wasmBindgenCliPackage = pkgs.wasm-bindgen-cli_0_2_128;
@@ -991,6 +997,7 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 | Dioxus CLI | Reproducibly packaged `dioxus-cli` 0.8.0-alpha.1, exposed as `dx`; automatic tool downloads and telemetry are disabled |
 | Rust toolchain | Shared stable Rust 1.98.1, satisfying the CLI’s Rust 1.93 minimum and extended declaratively with WebAssembly plus all four Android targets |
 | Web | `wasm32-unknown-unknown`, exact `wasm-bindgen-cli` 0.2.128, and Binaryen `wasm-opt` |
+| LAN development server | `dioxus-serve-lan` binds `0.0.0.0:8080`; the NixOS firewall permits TCP 8080 |
 | Android Studio | 2025.3.4.7 |
 | Android platform and Build Tools | API 35 and Build Tools 35.0.0 |
 | NDK and CMake | NDK 27.2.12479018 and CMake 3.22.1 |
@@ -1010,12 +1017,28 @@ wasm-bindgen --version  # expected: wasm-bindgen 0.2.128
 wasm-opt --version
 ```
 
-Run the web application with hot reload:
+Run the web application with hot reload on the local machine:
 
 ```sh
 cd ~/Projects/demos/damabase/project
 dx serve --platform web -p damabase-app
 ```
+
+Opening a firewall port is not sufficient for another computer to connect when `dx` listens only on loopback. The enabled `modules.develop.dioxus.developmentServer` policy therefore supplies `dioxus-serve-lan`, which passes the configured `--addr` and `--port` values before all project arguments:
+
+```sh
+cd ~/Projects/demos/damabase/project
+dioxus-serve-lan --platform web -p damabase-app
+```
+
+For `smunix`, this is equivalent to `dx serve --addr 0.0.0.0 --port 8080 ...`. Find the workstation's LAN address and verify the listener:
+
+```sh
+hostname -I
+ss -ltnp | grep ':8080'
+```
+
+A client on the same reachable network can then open `http://SMUNIX_LAN_IP:8080`. Binding `0.0.0.0` exposes the development server through every IPv4 interface allowed by the network, and the NixOS firewall rule permits TCP 8080. Dioxus's development server is intended for development rather than public production exposure; stop it when finished and set `developmentServer.openFirewall = false` on untrusted networks.[17]
 
 Do **not** run `rustup target add wasm32-unknown-unknown`; change `modules.develop.dioxus.web` or the shared Rust target list instead.
 

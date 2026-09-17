@@ -80,6 +80,12 @@
           enable = true;
           libclangPackage = pkgs.llvmPackages.libclang;
         };
+        developmentServer = {
+          enable = true;
+          address = "0.0.0.0";
+          port = 8080;
+          openFirewall = true;
+        };
         web = {
           enable = true;
           wasmBindgenCliPackage = pkgs.wasm-bindgen-cli_0_2_128;

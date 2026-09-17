@@ -85,6 +85,12 @@
         '';
       }
     else cfg.package;
+  dioxusServeLan = pkgs.writeShellScriptBin "dioxus-serve-lan" ''
+    exec "${dioxusCli}/bin/dx" serve \
+      --addr ${lib.escapeShellArg cfg.developmentServer.address} \
+      --port ${toString cfg.developmentServer.port} \
+      "$@"
+  '';
 
   androidEnvironment = pkgs.androidenv.override {
     licenseAccepted = true;
@@ -126,6 +132,28 @@ in {
       default = pkgs.llvmPackages.libclang;
       defaultText = lib.literalExpression "pkgs.llvmPackages.libclang";
       description = "Libclang package exposed to Dioxus hot-patching and its native fat-binary linker.";
+    };
+
+    developmentServer = {
+      enable = lib.mkEnableOption "a LAN-accessible Dioxus development-server helper";
+
+      address = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        default = "0.0.0.0";
+        description = "IP address used by dioxus-serve-lan. Use 0.0.0.0 to listen on every IPv4 interface.";
+      };
+
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 8080;
+        description = "TCP port used by dioxus-serve-lan and optionally opened in the NixOS firewall.";
+      };
+
+      openFirewall = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Open the configured TCP development-server port on the NixOS firewall.";
+      };
     };
 
     web = {
@@ -260,6 +288,15 @@ in {
 
       user.packages = [dioxusCli];
     }
+
+    (lib.mkIf cfg.developmentServer.enable {
+      user.packages = [dioxusServeLan];
+      networking.firewall.allowedTCPPorts = lib.optional cfg.developmentServer.openFirewall cfg.developmentServer.port;
+      environment.variables = {
+        DIOXUS_DEVSERVER_ADDR = cfg.developmentServer.address;
+        DIOXUS_DEVSERVER_PORT = toString cfg.developmentServer.port;
+      };
+    })
 
     (lib.mkIf cfg.desktop.enable {
       user.packages =
