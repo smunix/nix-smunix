@@ -26,9 +26,6 @@
     ])
     ++ [cfg.desktop.libclangPackage];
   libclangLibraryPath = "${lib.getLib cfg.desktop.libclangPackage}/lib";
-  dioxusCc = pkgs.writeShellScriptBin "cc" ''
-    exec ${pkgs.clang}/bin/clang -L${libclangLibraryPath} "$@"
-  '';
   desktopPackageClosure = lib.closePropagation desktopPackages;
   desktopRuntimeLibraries = map lib.getLib desktopPackageClosure;
   desktopDevelopmentOutputs = map lib.getDev desktopPackageClosure;
@@ -61,10 +58,6 @@
       "LIBRARY_PATH"
       ":"
       libclangLibraryPath
-      "--prefix"
-      "PATH"
-      ":"
-      (lib.makeBinPath [dioxusCc])
     ]
     ++ lib.optionals cfg.web.enable [
       "--prefix"

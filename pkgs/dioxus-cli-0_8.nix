@@ -30,6 +30,23 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   env.OPENSSL_NO_VENDOR = 1;
 
+  postPatch = ''
+    substituteInPlace src/build/link.rs \
+      --replace-fail \
+        '        // And now we can run the linker with our new args' \
+        '        // Make the Nix-provided libclang directory explicit for hot-patch fat linking.
+        if cfg!(target_os = "linux") {
+            if let Ok(libclang_path) = std::env::var("LIBCLANG_PATH") {
+                let search_arg = format!("-L{libclang_path}");
+                if !args.contains(&search_arg) {
+                    args.push(search_arg);
+                }
+            }
+        }
+
+        // And now we can run the linker with our new args'
+  '';
+
   nativeBuildInputs = [
     cacert
     installShellFiles
