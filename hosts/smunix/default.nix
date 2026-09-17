@@ -76,7 +76,10 @@
       cc.enable = true;
       dioxus = {
         enable = true;
-        desktop.enable = true;
+        desktop = {
+          enable = true;
+          libclangPackage = pkgs.llvmPackages.libclang;
+        };
         web = {
           enable = true;
           wasmBindgenCliPackage = pkgs.wasm-bindgen-cli_0_2_128;

@@ -14,15 +14,21 @@
     "x86_64-linux-android"
   ];
 
-  desktopPackages = with pkgs; [
-    dbus
-    gtk3
-    libayatana-appindicator
-    librsvg
-    openssl
-    webkitgtk_4_1
-    xdotool
-  ];
+  desktopPackages =
+    (with pkgs; [
+      dbus
+      gtk3
+      libayatana-appindicator
+      librsvg
+      openssl
+      webkitgtk_4_1
+      xdotool
+    ])
+    ++ [cfg.desktop.libclangPackage];
+  libclangLibraryPath = "${lib.getLib cfg.desktop.libclangPackage}/lib";
+  dioxusCc = pkgs.writeShellScriptBin "cc" ''
+    exec ${pkgs.clang}/bin/clang -L${libclangLibraryPath} "$@"
+  '';
   desktopPackageClosure = lib.closePropagation desktopPackages;
   desktopRuntimeLibraries = map lib.getLib desktopPackageClosure;
   desktopDevelopmentOutputs = map lib.getDev desktopPackageClosure;
@@ -48,6 +54,17 @@
       "GIO_EXTRA_MODULES"
       ":"
       (lib.makeSearchPath "lib/gio/modules" desktopPackageClosure)
+      "--set"
+      "LIBCLANG_PATH"
+      libclangLibraryPath
+      "--prefix"
+      "LIBRARY_PATH"
+      ":"
+      libclangLibraryPath
+      "--prefix"
+      "PATH"
+      ":"
+      (lib.makeBinPath [dioxusCc])
     ]
     ++ lib.optionals cfg.web.enable [
       "--prefix"
@@ -104,6 +121,13 @@ in {
       type = lib.types.bool;
       default = true;
       description = "Install and configure Linux dependencies for Dioxus desktop applications.";
+    };
+
+    desktop.libclangPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.llvmPackages.libclang;
+      defaultText = lib.literalExpression "pkgs.llvmPackages.libclang";
+      description = "Libclang package exposed to Dioxus hot-patching and its native fat-binary linker.";
     };
 
     web = {

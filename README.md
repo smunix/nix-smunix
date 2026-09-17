@@ -68,7 +68,10 @@ modules = {
     cc.enable = true;
     dioxus = {
       enable = true;
-      desktop.enable = true;
+      desktop = {
+        enable = true;
+        libclangPackage = pkgs.llvmPackages.libclang;
+      };
       web = {
         enable = true;
         wasmBindgenCliPackage = pkgs.wasm-bindgen-cli_0_2_128;
@@ -1046,6 +1049,13 @@ grep 'PKG_CONFIG_PATH' "$DX_WRAPPER"
 ```
 
 The Dioxus module closes over both direct and propagated desktop dependencies, derives `PKG_CONFIG_PATH`, `LD_LIBRARY_PATH`, `XDG_DATA_DIRS`, and `GIO_EXTRA_MODULES`, and writes those values into the `dx` wrapper during `postBuild`. Every Cargo process started by `dx` therefore inherits the same deterministic environment. A plain `pkg-config` invocation outside `dx` intentionally does not inherit that scoped environment.
+
+Rust hot-patching performs a second native fat-binary link. If that link reports `rust-lld: unable to find library -lclang`, the normal runtime path is insufficient because the linker needs an explicit native search directory. `modules.develop.dioxus.desktop.libclangPackage` selects the LLVM libclang package. The `dx` wrapper exports its `LIBCLANG_PATH` and `LIBRARY_PATH`, and prepends a Nix `cc` shim that invokes Clang with `-L$LIBCLANG_PATH`; Dioxus preserves that search flag when invoking the fat-binary linker.
+
+```sh
+DX_WRAPPER="$(readlink -f "$(command -v dx)")"
+grep -E 'LIBCLANG_PATH|LIBRARY_PATH' "$DX_WRAPPER"
+```
 
 Plain Cargo remains an alternative without the same integrated development server:
 
