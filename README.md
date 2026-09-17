@@ -1046,6 +1046,10 @@ Caddy runs as `smunix` through `dioxus-caddy.service`, a systemd **user service 
 The site address and `bind` target are both filled from the detected address before Caddy parses its configuration. Conceptually, a Wi-Fi address such as `192.168.1.50` produces this runtime Caddyfile:
 
 ```caddyfile
+{
+  skip_install_trust
+}
+
 http://192.168.1.50 {
   bind 192.168.1.50
   redir https://192.168.1.50{uri}
@@ -1067,7 +1071,7 @@ http://192.168.1.50 {
 }
 ```
 
-Caddy handles the Dioxus hot-reload WebSocket automatically. Explicit HTTP and HTTPS site blocks bind both listeners to the detected Wi-Fi address; relying only on Caddy's automatically generated redirect listener would bind HTTP on every interface. The firewall permits TCP 80 for HTTP-to-HTTPS redirects, TCP 443 for HTTPS, and UDP 443 for HTTP/3 **only on `wlp0s20f3`**. TCP 8080 stays closed, and a module assertion rejects enabling Caddy while Dioxus listens on a non-loopback address or its raw port is open. A root-owned wrapper executable only by the existing `wheel` group grants `CAP_NET_BIND_SERVICE`, allowing the unprivileged Caddy process to bind ports below 1024 without running the service as root.[17] [20]
+Caddy handles the Dioxus hot-reload WebSocket automatically. Explicit HTTP and HTTPS site blocks bind both listeners to the detected Wi-Fi address; relying only on Caddy's automatically generated redirect listener would bind HTTP on every interface. The firewall permits TCP 80 for HTTP-to-HTTPS redirects, TCP 443 for HTTPS, and UDP 443 for HTTP/3 **only on `wlp0s20f3`**. TCP 8080 stays closed, and a module assertion rejects enabling Caddy while Dioxus listens on a non-loopback address or its raw port is open. A root-owned wrapper executable only by the existing `wheel` group grants `CAP_NET_BIND_SERVICE`, allowing the unprivileged Caddy process to bind ports below 1024 without running the service as root. The user unit deliberately avoids filesystem-namespace directives such as `PrivateTmp` and `ProtectSystem`: systemd implements those directives for user units with a private user namespace, where file capabilities cannot grant authority over low ports in the host's network namespace.[17] [20] [24]
 
 After rebuilding, connect Wi-Fi, start Dioxus, and inspect both services:
 
@@ -1081,7 +1085,7 @@ journalctl --user -b -u dioxus-caddy
 journalctl -b -u NetworkManager-dispatcher -u dioxus-caddy-network-sync
 ```
 
-`dioxus-caddy-address` prints the current URL, for example `https://192.168.1.50`. Caddy's internal CA is private to this user service, so every client must trust its root certificate or the browser will correctly report an unknown issuer. Once the user service has started, install the root in the host's trust stores and export a public copy:
+`dioxus-caddy-address` prints the current URL, for example `https://192.168.1.50`. Caddy's internal CA is private to this user service, so every client must trust its root certificate or the browser will correctly report an unknown issuer. The generated configuration uses `skip_install_trust` because an unprivileged background service cannot install a system trust anchor noninteractively. Once the user service has started, install the root deliberately in the host's trust stores and export a public copy:
 
 ```sh
 sudo caddy trust
@@ -1197,3 +1201,4 @@ The first rebuild is large because Android Studio, the SDK, NDK, emulator, syste
 [21]: https://caddyserver.com/docs/command-line#caddy-trust "Caddy local CA trust command"
 [22]: https://networkmanager.dev/docs/api/latest/NetworkManager-dispatcher.html "NetworkManager dispatcher events and interface arguments"
 [23]: https://www.freedesktop.org/software/systemd/man/latest/loginctl.html "systemd user lingering"
+[24]: https://www.freedesktop.org/software/systemd/man/255/systemd.exec.html "systemd user-service namespace and capability semantics"

@@ -109,9 +109,10 @@
     then "{$DIOXUS_CADDY_HOST}"
     else caddyCfg.hostName;
   caddyConfig = pkgs.writeText "dioxus-caddy.Caddyfile" ''
-    ${lib.optionalString (caddyCfg.tlsMode == "public" && caddyCfg.acmeEmail != null) ''
+    ${lib.optionalString (caddyCfg.tlsMode == "internal" || caddyCfg.acmeEmail != null) ''
       {
-        email ${caddyCfg.acmeEmail}
+        ${lib.optionalString (caddyCfg.tlsMode == "internal") "skip_install_trust"}
+        ${lib.optionalString (caddyCfg.tlsMode == "public" && caddyCfg.acmeEmail != null) "email ${caddyCfg.acmeEmail}"}
       }
     ''}
     http://${caddySiteAddress} {
@@ -163,12 +164,16 @@
     fi
 
     export DIOXUS_CADDY_BIND="$address"
-    export DIOXUS_CADDY_HOST="$address"
+    export DIOXUS_CADDY_HOST=${
+      if caddyCfg.hostName == null
+      then "\"$address\""
+      else lib.escapeShellArg caddyCfg.hostName
+    }
     export XDG_DATA_HOME="''${XDG_DATA_HOME:-$HOME/.local/share}"
     export XDG_CONFIG_HOME="''${XDG_CONFIG_HOME:-$HOME/.config}"
     mkdir -p "$XDG_DATA_HOME/caddy" "$XDG_CONFIG_HOME/caddy"
 
-    echo "Dioxus Caddy: serving ${caddySiteAddress} through $address on ${caddyNetworkInterface}." >&2
+    echo "Dioxus Caddy: serving https://$DIOXUS_CADDY_HOST through $address on ${caddyNetworkInterface}." >&2
     exec /run/wrappers/bin/dioxus-caddy run \
       --config ${caddyConfig} \
       --adapter caddyfile
@@ -523,8 +528,6 @@ in {
           ExecStart = caddyLauncher;
           Restart = "on-failure";
           RestartSec = 5;
-          PrivateTmp = true;
-          ProtectSystem = "full";
         };
       };
 
