@@ -10,4 +10,5 @@ in {
     rustPlatform = ayaRustPlatform;
   };
   bpf-linker-aya = pkgs.callPackage ./bpf-linker.nix {};
+  dioxus-cli_0_8 = pkgs.callPackage ./dioxus-cli-0_8.nix {};
 }

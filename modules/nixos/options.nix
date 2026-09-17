@@ -35,6 +35,7 @@ in {
     extraGroups = mkOption {
       type = types.listOf types.str;
       default = ["wheel"];
+      apply = lib.unique;
       description = "Supplementary groups assigned to the primary user.";
     };
 

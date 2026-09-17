@@ -74,6 +74,25 @@
     develop = {
       aya.enable = true;
       cc.enable = true;
+      dioxus = {
+        enable = true;
+        desktop.enable = true;
+        android = {
+          enable = true;
+          platformVersion = "35";
+          buildToolsVersion = "35.0.0";
+          ndkVersion = "27.2.12479018";
+          cmakeVersion = "3.22.1";
+          includeEmulator = true;
+          includeSystemImage = true;
+          rustTargets = [
+            "aarch64-linux-android"
+            "armv7-linux-androideabi"
+            "i686-linux-android"
+            "x86_64-linux-android"
+          ];
+        };
+      };
       haskell.enable = true;
       python.enable = true;
       rust = {

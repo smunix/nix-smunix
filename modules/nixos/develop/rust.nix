@@ -6,6 +6,7 @@
 }: let
   cfg = config.modules.develop.rust;
   rustToolchain = pkgs.rust-bin.nightly.${cfg.nightlyVersion}.default.override {
+    targets = cfg.targets;
     extensions = [
       "rust-src"
       "rustfmt"
@@ -21,6 +22,13 @@ in {
       type = lib.types.str;
       default = "2026-07-15";
       description = "Pinned rust-overlay nightly version used across the host and by dependent development modules such as Aya.";
+    };
+
+    targets = lib.mkOption {
+      type = lib.types.listOf lib.types.nonEmptyStr;
+      default = [];
+      apply = lib.unique;
+      description = "Additional compilation targets included in the shared rust-overlay toolchain.";
     };
 
     toolchain = lib.mkOption {

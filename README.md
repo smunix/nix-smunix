@@ -66,6 +66,25 @@ modules = {
   develop = {
     aya.enable = true;
     cc.enable = true;
+    dioxus = {
+      enable = true;
+      desktop.enable = true;
+      android = {
+        enable = true;
+        platformVersion = "35";
+        buildToolsVersion = "35.0.0";
+        ndkVersion = "27.2.12479018";
+        cmakeVersion = "3.22.1";
+        includeEmulator = true;
+        includeSystemImage = true;
+        rustTargets = [
+          "aarch64-linux-android"
+          "armv7-linux-androideabi"
+          "i686-linux-android"
+          "x86_64-linux-android"
+        ];
+      };
+    };
     haskell.enable = true;
     python.enable = true;
     rust = {
@@ -955,7 +974,95 @@ cat /sys/kernel/security/lsm
 
 The first VM invocation may build or download a substantial NixOS and QEMU closure. Later launches reuse the Nix store and are faster. Stop the VM normally with `poweroff` from the guest.
 
+## Dioxus desktop and Android development
+
+`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive WebKitGTK 4.1, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15]
+
+| Component | Selected implementation |
+|---|---|
+| Dioxus CLI | Reproducibly packaged `dioxus-cli` 0.8.0-alpha.1, exposed as `dx`; automatic tool downloads and telemetry are disabled |
+| Rust toolchain | Shared nightly `2026-07-15` (Rust 1.99), satisfying the CLI’s Rust 1.93 minimum and extended declaratively with all four Android targets |
+| Android Studio | 2025.3.4.7 |
+| Android platform and Build Tools | API 35 and Build Tools 35.0.0 |
+| NDK and CMake | NDK 27.2.12479018 and CMake 3.22.1 |
+| Emulator | Android emulator 36.5.11 with a Google APIs API-35 x86_64 system image |
+| Java | OpenJDK 17 |
+| Hardware acceleration | The primary user belongs to `kvm`; log out and back in after activation |
+
+After rebuilding, inspect the installation:
+
+```sh
+dx --version
+dx doctor
+printf '%s\n' "$ANDROID_HOME" "$ANDROID_NDK_HOME" "$JAVA_HOME"
+adb version
+emulator -version
+```
+
+To run a Dioxus application immediately as a native desktop application with hot reloading:
+
+```sh
+cd ~/src/my-dioxus-app
+dx serve --platform desktop
+```
+
+The Dioxus 0.8 CLI also provides the shorthand form.[17]
+
+```sh
+dx serve --desktop
+```
+
+Plain Cargo remains an alternative without the same integrated development server:
+
+```sh
+cargo run
+```
+
+Android support is fully declarative. Do **not** run `rustup target add`: the Rust module already includes `aarch64-linux-android`, `armv7-linux-androideabi`, `i686-linux-android`, and `x86_64-linux-android` in the resolved nightly toolchain, matching the targets recommended by the Dioxus mobile guide.[16]
+
+Android Studio and command-line tools use these generated paths:
+
+```text
+ANDROID_HOME=/nix/store/...-androidsdk/libexec/android-sdk
+ANDROID_SDK_ROOT=$ANDROID_HOME
+ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018
+NDK_HOME=$ANDROID_NDK_HOME
+JAVA_HOME=/nix/store/...-openjdk-17.../lib/openjdk
+```
+
+The SDK and NDK are read-only Nix store content. Use Android Studio for editing, device management, and AVD management, but change SDK component versions through `modules.develop.dioxus.android` rather than asking Studio to mutate the SDK. AVD definitions and emulator data remain writable in the user profile.
+
+Create and start the included emulator image:
+
+```sh
+avdmanager create avd \
+  --force \
+  --name Pixel_API_35 \
+  --package 'system-images;android-35;google_apis;x86_64'
+
+emulator -avd Pixel_API_35 -netdelay none -netspeed full
+adb devices
+```
+
+With an emulator running, serve the Android application:
+
+```sh
+dx serve --android
+```
+
+Dioxus also accepts the explicit platform form where supported by the project and CLI command:
+
+```sh
+dx serve --platform android
+```
+
+The first rebuild is large because Android Studio, the SDK, NDK, emulator, system image, WebKitGTK, and four Rust target libraries enter the system closure. Subsequent builds reuse the Nix store.
+
 [11]: https://aya-rs.dev/book/start/development.html "Aya development environment"
 [12]: https://nixos.org/manual/nixos/stable/#sec-qemu-vm "NixOS QEMU virtual machines"
 [13]: https://aya-rs.dev/book/aya/aya-tool.html "Using aya-tool"
 [14]: https://bpftrace.org/docs/release_025/docs "bpftrace 0.25 documentation"
+[15]: https://dioxuslabs.com/learn/0.7/getting_started/ "Dioxus 0.7 getting started and Linux desktop dependencies"
+[16]: https://dioxuslabs.com/learn/0.7/guides/platforms/mobile/ "Dioxus 0.7 mobile development guide"
+[17]: https://dioxuslabs.com/learn/0.7/tutorial/bundle/ "Dioxus desktop and Android serving"
+[18]: https://crates.io/crates/dioxus-cli/0.8.0-alpha.1 "dioxus-cli 0.8.0-alpha.1 release metadata"
