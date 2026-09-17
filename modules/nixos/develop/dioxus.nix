@@ -93,6 +93,13 @@ in {
         description = "Rust WebAssembly target added to the shared rust-overlay toolchain.";
       };
 
+      wasmBindgenCliPackage = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.wasm-bindgen-cli_0_2_128;
+        defaultText = lib.literalExpression "pkgs.wasm-bindgen-cli_0_2_128";
+        description = "Exact wasm-bindgen CLI package selected to match the application's wasm-bindgen crate version.";
+      };
+
       wasmOptPackage = lib.mkOption {
         type = lib.types.package;
         default = pkgs.binaryen;
@@ -225,7 +232,10 @@ in {
 
     (lib.mkIf cfg.web.enable {
       modules.develop.rust.targets = lib.mkAfter [cfg.web.rustTarget];
-      user.packages = [cfg.web.wasmOptPackage];
+      user.packages = [
+        cfg.web.wasmBindgenCliPackage
+        cfg.web.wasmOptPackage
+      ];
     })
 
     (lib.mkIf cfg.android.enable {

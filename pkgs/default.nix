@@ -11,4 +11,5 @@ in {
   };
   bpf-linker-aya = pkgs.callPackage ./bpf-linker.nix {};
   dioxus-cli_0_8 = pkgs.callPackage ./dioxus-cli-0_8.nix {};
+  wasm-bindgen-cli_0_2_128 = pkgs.callPackage ./wasm-bindgen-cli-0_2_128.nix {};
 }

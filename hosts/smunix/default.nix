@@ -77,7 +77,10 @@
       dioxus = {
         enable = true;
         desktop.enable = true;
-        web.enable = true;
+        web = {
+          enable = true;
+          wasmBindgenCliPackage = pkgs.wasm-bindgen-cli_0_2_128;
+        };
         android = {
           enable = true;
           platformVersion = "35";

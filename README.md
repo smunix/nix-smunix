@@ -69,7 +69,10 @@ modules = {
     dioxus = {
       enable = true;
       desktop.enable = true;
-      web.enable = true;
+      web = {
+        enable = true;
+        wasmBindgenCliPackage = pkgs.wasm-bindgen-cli_0_2_128;
+      };
       android = {
         enable = true;
         platformVersion = "35";
@@ -983,7 +986,7 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 |---|---|
 | Dioxus CLI | Reproducibly packaged `dioxus-cli` 0.8.0-alpha.1, exposed as `dx`; automatic tool downloads and telemetry are disabled |
 | Rust toolchain | Shared nightly `2026-07-15` (Rust 1.99), satisfying the CLI’s Rust 1.93 minimum and extended declaratively with WebAssembly plus all four Android targets |
-| Web | `wasm32-unknown-unknown`, matching `wasm-bindgen-cli` 0.2.121, and Binaryen `wasm-opt` |
+| Web | `wasm32-unknown-unknown`, exact `wasm-bindgen-cli` 0.2.128, and Binaryen `wasm-opt` |
 | Android Studio | 2025.3.4.7 |
 | Android platform and Build Tools | API 35 and Build Tools 35.0.0 |
 | NDK and CMake | NDK 27.2.12479018 and CMake 3.22.1 |
@@ -991,13 +994,15 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 | Java | OpenJDK 17 |
 | Hardware acceleration | The primary user belongs to `kvm`; log out and back in after activation |
 
-Without `wasm32-unknown-unknown` in the active Rust sysroot, `dx serve --platform web` attempts `rustup target add`. Nix-managed hosts do not install or mutate toolchains through rustup, so that fallback fails with `No such file or directory`. Enabling `modules.develop.dioxus.web` adds the target to the shared rust-overlay toolchain and installs `wasm-opt` declaratively. The pinned `dx` wrapper already supplies the matching `wasm-bindgen` helper.
+Without `wasm32-unknown-unknown` in the active Rust sysroot, `dx serve --platform web` attempts `rustup target add`. Nix-managed hosts do not install or mutate toolchains through rustup, so that fallback fails with `No such file or directory`. Enabling `modules.develop.dioxus.web` adds the target to the shared rust-overlay toolchain and installs `wasm-opt` declaratively.
+
+The `wasm-bindgen` crate embedded in an application and the external `wasm-bindgen` command must use the same schema version. The Damabase application requires 0.2.128, so this repository packages that exact crates.io release, wraps it into `dx`, and selects it through `modules.develop.dioxus.web.wasmBindgenCliPackage`.[19] Override that package option deliberately when a future project lockfile requires another version.
 
 Verify web tooling after rebuilding:
 
 ```sh
 rustc --print target-libdir --target wasm32-unknown-unknown
-wasm-bindgen --version
+wasm-bindgen --version  # expected: wasm-bindgen 0.2.128
 wasm-opt --version
 ```
 
@@ -1096,3 +1101,4 @@ The first rebuild is large because Android Studio, the SDK, NDK, emulator, syste
 [16]: https://dioxuslabs.com/learn/0.7/guides/platforms/mobile/ "Dioxus 0.7 mobile development guide"
 [17]: https://dioxuslabs.com/learn/0.7/tutorial/bundle/ "Dioxus desktop and Android serving"
 [18]: https://crates.io/crates/dioxus-cli/0.8.0-alpha.1 "dioxus-cli 0.8.0-alpha.1 release metadata"
+[19]: https://crates.io/crates/wasm-bindgen-cli/0.2.128 "wasm-bindgen-cli 0.2.128 release metadata"

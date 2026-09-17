@@ -10,7 +10,7 @@
   pkg-config,
   rustPlatform,
   rustfmt,
-  wasm-bindgen-cli_0_2_121,
+  wasm-bindgen-cli_0_2_128,
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "dioxus-cli";
@@ -58,7 +58,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
       lib.makeBinPath [
         binaryen
         esbuild
-        wasm-bindgen-cli_0_2_121
+        wasm-bindgen-cli_0_2_128
       ]
     }
   '';
