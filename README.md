@@ -1012,13 +1012,14 @@ The Dioxus 0.8 CLI also provides the shorthand form.[17]
 dx serve --desktop
 ```
 
-If a Rust dependency reports that `dbus-1.pc` is missing, verify that the wrapped desktop environment resolves it before rebuilding the application:
+If a Rust dependency reports that `dbus-1.pc` is missing, inspect the regenerated `dx` wrapper after rebuilding the host:
 
 ```sh
-pkg-config --modversion dbus-1
+DX_WRAPPER="$(readlink -f "$(command -v dx)")"
+grep -o '/nix/store/[^:]*-dbus-[^:]*/lib/pkgconfig' "$DX_WRAPPER"
 ```
 
-The Dioxus module places DBus's development output in `PKG_CONFIG_PATH` and its runtime output in `LD_LIBRARY_PATH`, so this command should print the packaged DBus version without manual `nix-shell` or global environment changes.
+The Dioxus module places DBus's development output in `PKG_CONFIG_PATH` and its runtime output in `LD_LIBRARY_PATH` for `dx` and the Cargo processes that it starts. A plain `pkg-config` invocation outside `dx` does not inherit that intentionally scoped wrapper environment.
 
 Plain Cargo remains an alternative without the same integrated development server:
 
