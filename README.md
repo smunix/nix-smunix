@@ -74,9 +74,15 @@ modules = {
       };
       developmentServer = {
         enable = true;
-        address = "0.0.0.0";
+        address = "127.0.0.1";
         port = 8080;
-        openFirewall = true;
+        openFirewall = false;
+        caddy = {
+          enable = true;
+          networkInterface = "wlp0s20f3";
+          tlsMode = "internal";
+          openFirewall = true;
+        };
       };
       web = {
         enable = true;
@@ -997,7 +1003,7 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 | Dioxus CLI | Reproducibly packaged `dioxus-cli` 0.8.0-alpha.1, exposed as `dx`; automatic tool downloads and telemetry are disabled |
 | Rust toolchain | Shared stable Rust 1.98.1, satisfying the CLI’s Rust 1.93 minimum and extended declaratively with WebAssembly plus all four Android targets |
 | Web | `wasm32-unknown-unknown`, exact `wasm-bindgen-cli` 0.2.128, and Binaryen `wasm-opt` |
-| LAN development server | `dioxus-serve-lan` binds `0.0.0.0:8080`; the NixOS firewall permits TCP 8080 |
+| HTTPS development server | `dioxus-serve` binds the backend to `127.0.0.1:8080`; a user-owned Caddy service discovers and binds the current `wlp0s20f3` IPv4 address after Wi-Fi connects while the raw Dioxus port remains closed |
 | Android Studio | 2025.3.4.7 |
 | Android platform and Build Tools | API 35 and Build Tools 35.0.0 |
 | NDK and CMake | NDK 27.2.12479018 and CMake 3.22.1 |
@@ -1024,21 +1030,72 @@ cd ~/Projects/demos/damabase/project
 dx serve --platform web -p damabase-app
 ```
 
-Opening a firewall port is not sufficient for another computer to connect when `dx` listens only on loopback. The enabled `modules.develop.dioxus.developmentServer` policy therefore supplies `dioxus-serve-lan`, which passes the configured `--addr` and `--port` values before all project arguments:
+### Caddy HTTPS for the Dioxus development server
+
+The `smunix` host runs Caddy as the only LAN-facing entry point. The `dioxus-serve` helper passes the configured loopback address and port before all project arguments, so Dioxus listens on plain HTTP at `127.0.0.1:8080` and is not directly reachable from another machine:
 
 ```sh
 cd ~/Projects/demos/damabase/project
-dioxus-serve-lan --platform web -p damabase-app
+dioxus-serve --platform web -p damabase-app
 ```
 
-For `smunix`, this is equivalent to `dx serve --addr 0.0.0.0 --port 8080 ...`. Find the workstation's LAN address and verify the listener:
+`dioxus-serve-lan` remains as a compatibility alias, but it uses the same configured loopback endpoint. For `smunix`, either helper is equivalent to `dx serve --addr 127.0.0.1 --port 8080 ...`.
+
+Caddy runs as `smunix` through `dioxus-caddy.service`, a systemd **user service with no boot target**. A NetworkManager dispatcher reacts only to `wlp0s20f3`: `up`, `dhcp4-change`, and `reapply` events obtain the interface's first global IPv4 address and restart the user service; `pre-down` and `down` stop it. A boot-time reconciliation handles Wi-Fi that was already active while the new system generation was activated. Declarative lingering keeps the user manager available without making Caddy an unconditional login or boot service.[22] [23]
+
+The site address and `bind` target are both filled from the detected address before Caddy parses its configuration. Conceptually, a Wi-Fi address such as `192.168.1.50` produces this runtime Caddyfile:
+
+```caddyfile
+http://192.168.1.50 {
+  bind 192.168.1.50
+  redir https://192.168.1.50{uri}
+}
+
+192.168.1.50 {
+  bind 192.168.1.50
+  tls internal
+  reverse_proxy 127.0.0.1:8080
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+  }
+
+  encode zstd gzip
+}
+```
+
+Caddy handles the Dioxus hot-reload WebSocket automatically. Explicit HTTP and HTTPS site blocks bind both listeners to the detected Wi-Fi address; relying only on Caddy's automatically generated redirect listener would bind HTTP on every interface. The firewall permits TCP 80 for HTTP-to-HTTPS redirects, TCP 443 for HTTPS, and UDP 443 for HTTP/3 **only on `wlp0s20f3`**. TCP 8080 stays closed, and a module assertion rejects enabling Caddy while Dioxus listens on a non-loopback address or its raw port is open. A root-owned wrapper executable only by the existing `wheel` group grants `CAP_NET_BIND_SERVICE`, allowing the unprivileged Caddy process to bind ports below 1024 without running the service as root.[17] [20]
+
+After rebuilding, connect Wi-Fi, start Dioxus, and inspect both services:
 
 ```sh
-hostname -I
-ss -ltnp | grep ':8080'
+systemctl --user status dioxus-caddy
+systemctl --user cat dioxus-caddy
+dioxus-caddy-address
+ip -4 -o address show dev wlp0s20f3 scope global
+ss -ltnp | grep -E ':(80|443|8080)\\b'
+journalctl --user -b -u dioxus-caddy
+journalctl -b -u NetworkManager-dispatcher -u dioxus-caddy-network-sync
 ```
 
-A client on the same reachable network can then open `http://SMUNIX_LAN_IP:8080`. Binding `0.0.0.0` exposes the development server through every IPv4 interface allowed by the network, and the NixOS firewall rule permits TCP 8080. Dioxus's development server is intended for development rather than public production exposure; stop it when finished and set `developmentServer.openFirewall = false` on untrusted networks.[17]
+`dioxus-caddy-address` prints the current URL, for example `https://192.168.1.50`. Caddy's internal CA is private to this user service, so every client must trust its root certificate or the browser will correctly report an unknown issuer. Once the user service has started, install the root in the host's trust stores and export a public copy:
+
+```sh
+sudo caddy trust
+cp "$HOME/.local/share/caddy/pki/authorities/local/root.crt" \
+  "$HOME/caddy-local-root.crt"
+chmod 0644 "$HOME/caddy-local-root.crt"
+curl --cacert "$HOME/caddy-local-root.crt" "$(dioxus-caddy-address)"
+```
+
+Transfer only `caddy-local-root.crt` to each trusted LAN client and import it as a trusted certificate authority. Never copy anything else from Caddy's PKI directory: its private root and intermediate keys must remain on `smunix`. Trusting the root lets that Caddy installation authenticate any name or address for which it issues a certificate, so install it only on devices you control.[20] [21]
+
+When DHCP changes the Wi-Fi address, NetworkManager restarts Caddy with the new bind and certificate address. The internal root CA remains the same, so already trusted clients do not need a new root, but they must browse to the newly reported URL. Disconnecting `wlp0s20f3` stops Caddy even if another interface remains online.
+
+For a public DNS name later, set `hostName` to that name and `tlsMode = "public"`; Caddy then omits `tls internal` and obtains and renews a public certificate automatically while continuing to bind the current Wi-Fi address. Point the DNS A/AAAA records at the server and forward public TCP 80 and 443 before enabling that mode. An optional `caddy.acmeEmail` configures the ACME account email. Dynamic address mode deliberately accepts only internal TLS; public TLS requires a fixed DNS `hostName`. Do not expose Dioxus itself or use the development server as a hardened production application server.[20]
 
 Do **not** run `rustup target add wasm32-unknown-unknown`; change `modules.develop.dioxus.web` or the shared Rust target list instead.
 
@@ -1136,3 +1193,7 @@ The first rebuild is large because Android Studio, the SDK, NDK, emulator, syste
 [17]: https://dioxuslabs.com/learn/0.7/tutorial/bundle/ "Dioxus desktop and Android serving"
 [18]: https://crates.io/crates/dioxus-cli/0.8.0-alpha.1 "dioxus-cli 0.8.0-alpha.1 release metadata"
 [19]: https://crates.io/crates/wasm-bindgen-cli/0.2.128 "wasm-bindgen-cli 0.2.128 release metadata"
+[20]: https://caddyserver.com/docs/automatic-https "Caddy automatic and local HTTPS"
+[21]: https://caddyserver.com/docs/command-line#caddy-trust "Caddy local CA trust command"
+[22]: https://networkmanager.dev/docs/api/latest/NetworkManager-dispatcher.html "NetworkManager dispatcher events and interface arguments"
+[23]: https://www.freedesktop.org/software/systemd/man/latest/loginctl.html "systemd user lingering"

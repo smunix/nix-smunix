@@ -82,9 +82,15 @@
         };
         developmentServer = {
           enable = true;
-          address = "0.0.0.0";
+          address = "127.0.0.1";
           port = 8080;
-          openFirewall = true;
+          openFirewall = false;
+          caddy = {
+            enable = true;
+            networkInterface = "wlp0s20f3";
+            tlsMode = "internal";
+            openFirewall = true;
+          };
         };
         web = {
           enable = true;
