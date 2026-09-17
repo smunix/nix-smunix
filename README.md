@@ -980,7 +980,7 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 
 ## Dioxus desktop, web, and Android development
 
-`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive WebKitGTK 4.1, DBus development metadata and runtime libraries, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15]
+`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive GTK3, WebKitGTK 4.1, DBus, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15] The generated wrapper evaluates the GTK setup hooks and captures their propagated GLib/GIO/GObject, Pango, ATK, Cairo, GDK Pixbuf, pkg-config, GSettings, and runtime-library environment rather than maintaining a fragile hand-written list of direct `.pc` paths.
 
 | Component | Selected implementation |
 |---|---|
@@ -1038,14 +1038,14 @@ The Dioxus 0.8 CLI also provides the shorthand form.[17]
 dx serve --desktop
 ```
 
-If a Rust dependency reports that `dbus-1.pc` is missing, inspect the regenerated `dx` wrapper after rebuilding the host:
+If a Rust `*-sys` crate reports missing metadata such as `dbus-1.pc`, `gio-2.0.pc`, `gobject-2.0.pc`, `pango.pc`, or `atk.pc`, inspect the regenerated wrapper after rebuilding:
 
 ```sh
 DX_WRAPPER="$(readlink -f "$(command -v dx)")"
-grep -o '/nix/store/[^:]*-dbus-[^:]*/lib/pkgconfig' "$DX_WRAPPER"
+grep 'PKG_CONFIG_PATH' "$DX_WRAPPER"
 ```
 
-The Dioxus module places DBus's development output in `PKG_CONFIG_PATH` and its runtime output in `LD_LIBRARY_PATH` for `dx` and the Cargo processes that it starts. A plain `pkg-config` invocation outside `dx` does not inherit that intentionally scoped wrapper environment.
+The Dioxus module uses Nix build inputs and the GTK3 GApp setup hook to collect both direct and propagated desktop dependencies. It then prepends the captured `PKG_CONFIG_PATH`, GApp environment, and transitive runtime-library closure for `dx` and every Cargo process it starts. A plain `pkg-config` invocation outside `dx` intentionally does not inherit that scoped environment.
 
 Plain Cargo remains an alternative without the same integrated development server:
 

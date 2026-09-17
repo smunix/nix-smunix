@@ -16,30 +16,16 @@
 
   desktopPackages = with pkgs; [
     dbus
+    gtk3
     libayatana-appindicator
     librsvg
     openssl
     webkitgtk_4_1
     xdotool
   ];
-  desktopRuntimeLibraries = map lib.getLib desktopPackages;
-  desktopDevelopmentOutputs = map lib.getDev (with pkgs; [
-    dbus
-    libayatana-appindicator
-    librsvg
-    openssl
-    webkitgtk_4_1
-  ]);
-  desktopPkgConfigPath = lib.concatStringsSep ":" [
-    (lib.makeSearchPath "lib/pkgconfig" desktopDevelopmentOutputs)
-    (lib.makeSearchPath "share/pkgconfig" desktopDevelopmentOutputs)
-  ];
+  desktopRuntimeLibraries = map lib.getLib (lib.closePropagation desktopPackages);
   dioxusWrapperArgs =
     lib.optionals cfg.desktop.enable [
-      "--prefix"
-      "PKG_CONFIG_PATH"
-      ":"
-      desktopPkgConfigPath
       "--prefix"
       "LD_LIBRARY_PATH"
       ":"
@@ -60,9 +46,21 @@
       pkgs.symlinkJoin {
         name = "dioxus-cli-${cfg.package.version}-configured";
         paths = [cfg.package];
-        nativeBuildInputs = [pkgs.makeWrapper];
-        postBuild = ''
-          wrapProgram "$out/bin/dx" ${lib.escapeShellArgs dioxusWrapperArgs}
+        nativeBuildInputs =
+          [pkgs.makeWrapper]
+          ++ lib.optionals cfg.desktop.enable [
+            pkgs.pkg-config
+            pkgs.wrapGAppsHook3
+          ];
+        buildInputs = lib.optionals cfg.desktop.enable desktopPackages;
+        dontWrapGApps = true;
+        postFixup = ''
+          wrapperArgs=(${lib.escapeShellArgs dioxusWrapperArgs})
+          ${lib.optionalString cfg.desktop.enable ''
+            wrapperArgs+=(--prefix PKG_CONFIG_PATH : "$PKG_CONFIG_PATH")
+            wrapperArgs+=("''${gappsWrapperArgs[@]}")
+          ''}
+          wrapProgram "$out/bin/dx" "''${wrapperArgs[@]}"
         '';
       }
     else cfg.package;
@@ -244,8 +242,7 @@ in {
           pkgs.lld
           pkgs.pkg-config
         ]
-        ++ desktopPackages
-        ++ desktopDevelopmentOutputs;
+        ++ desktopPackages;
     })
 
     (lib.mkIf cfg.web.enable {
