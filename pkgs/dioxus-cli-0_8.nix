@@ -36,22 +36,26 @@ rustPlatform.buildRustPackage (finalAttrs: {
         '        out_args.extend(out_arg.iter().map(Into::into));' \
         '        out_args.extend(out_arg.iter().map(Into::into));
 
-        // Make the Nix-provided libclang directory explicit for incremental hot-patch linking.
+        // Make every Nix-provided native library directory explicit for incremental linking.
         if cfg!(target_os = "linux") {
-            if let Ok(libclang_path) = std::env::var("LIBCLANG_PATH") {
-                out_args.push(format!("-L{libclang_path}").into());
+            if let Some(library_path) = std::env::var_os("LIBRARY_PATH") {
+                out_args.extend(std::env::split_paths(&library_path).map(|path| {
+                    format!("-L{}", path.display()).into()
+                }));
             }
         }'
 
     substituteInPlace src/build/link.rs \
       --replace-fail \
         '        tracing::trace!("Fat linking with args: {:?} {:#?}", linker, args);' \
-        '        // Make the Nix-provided libclang directory explicit for full fat-binary linking.
+        '        // Make every Nix-provided native library directory explicit for full fat linking.
         if cfg!(target_os = "linux") {
-            if let Ok(libclang_path) = std::env::var("LIBCLANG_PATH") {
-                let search_arg = format!("-L{libclang_path}");
-                if !args.contains(&search_arg) {
-                    args.push(search_arg);
+            if let Some(library_path) = std::env::var_os("LIBRARY_PATH") {
+                for path in std::env::split_paths(&library_path) {
+                    let search_arg = format!("-L{}", path.display());
+                    if !args.contains(&search_arg) {
+                        args.push(search_arg);
+                    }
                 }
             }
         }

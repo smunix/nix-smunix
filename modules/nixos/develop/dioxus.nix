@@ -29,6 +29,11 @@
   desktopPackageClosure = lib.closePropagation desktopPackages;
   desktopRuntimeLibraries = map lib.getLib desktopPackageClosure;
   desktopDevelopmentOutputs = map lib.getDev desktopPackageClosure;
+  desktopRuntimeLibraryPath = lib.makeLibraryPath desktopRuntimeLibraries;
+  desktopNativeLibraryPath = lib.concatStringsSep ":" [
+    desktopRuntimeLibraryPath
+    (lib.makeSearchPath "lib" desktopDevelopmentOutputs)
+  ];
   desktopPkgConfigPath = lib.concatStringsSep ":" [
     (lib.makeSearchPath "lib/pkgconfig" desktopDevelopmentOutputs)
     (lib.makeSearchPath "share/pkgconfig" desktopDevelopmentOutputs)
@@ -42,7 +47,7 @@
       "--prefix"
       "LD_LIBRARY_PATH"
       ":"
-      (lib.makeLibraryPath desktopRuntimeLibraries)
+      desktopRuntimeLibraryPath
       "--prefix"
       "XDG_DATA_DIRS"
       ":"
@@ -57,7 +62,7 @@
       "--prefix"
       "LIBRARY_PATH"
       ":"
-      libclangLibraryPath
+      desktopNativeLibraryPath
     ]
     ++ lib.optionals cfg.web.enable [
       "--prefix"

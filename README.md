@@ -1050,7 +1050,7 @@ grep 'PKG_CONFIG_PATH' "$DX_WRAPPER"
 
 The Dioxus module closes over both direct and propagated desktop dependencies, derives `PKG_CONFIG_PATH`, `LD_LIBRARY_PATH`, `XDG_DATA_DIRS`, and `GIO_EXTRA_MODULES`, and writes those values into the `dx` wrapper during `postBuild`. Every Cargo process started by `dx` therefore inherits the same deterministic environment. A plain `pkg-config` invocation outside `dx` intentionally does not inherit that scoped environment.
 
-Rust hot-patching performs a second native fat-binary link. If that link reports `rust-lld: unable to find library -lclang`, the normal runtime path is insufficient because the reconstructed linker command needs an explicit native search directory. `modules.develop.dioxus.desktop.libclangPackage` selects the LLVM libclang package, and the `dx` wrapper exports its `LIBCLANG_PATH` and `LIBRARY_PATH`. The pinned Dioxus 0.8 package carries a focused Linux patch that reads `LIBCLANG_PATH` and appends `-L<path>` directly to the reconstructed fat-link arguments before invoking the linker.
+Native desktop links can report `unable to find library -lclang`, `-lxdo`, or another `-l<name>` even when the runtime library is present, because linkers need explicit compile-time search directories. `modules.develop.dioxus.desktop.libclangPackage` selects LLVM libclang, while the generated wrapper builds `LIBRARY_PATH` from every runtime and development `lib` directory in the propagated GTK/WebKit desktop closure. The pinned Dioxus 0.8 package carries a focused Linux patch that splits this path and adds every directory as an explicit `-L<path>` argument to both reconstructed hot-patch link commands.
 
 ```sh
 DX_WRAPPER="$(readlink -f "$(command -v dx)")"
