@@ -23,13 +23,31 @@
     webkitgtk_4_1
     xdotool
   ];
-  desktopRuntimeLibraries = map lib.getLib (lib.closePropagation desktopPackages);
+  desktopPackageClosure = lib.closePropagation desktopPackages;
+  desktopRuntimeLibraries = map lib.getLib desktopPackageClosure;
+  desktopDevelopmentOutputs = map lib.getDev desktopPackageClosure;
+  desktopPkgConfigPath = lib.concatStringsSep ":" [
+    (lib.makeSearchPath "lib/pkgconfig" desktopDevelopmentOutputs)
+    (lib.makeSearchPath "share/pkgconfig" desktopDevelopmentOutputs)
+  ];
   dioxusWrapperArgs =
     lib.optionals cfg.desktop.enable [
+      "--prefix"
+      "PKG_CONFIG_PATH"
+      ":"
+      desktopPkgConfigPath
       "--prefix"
       "LD_LIBRARY_PATH"
       ":"
       (lib.makeLibraryPath desktopRuntimeLibraries)
+      "--prefix"
+      "XDG_DATA_DIRS"
+      ":"
+      (lib.makeSearchPath "share" desktopPackageClosure)
+      "--prefix"
+      "GIO_EXTRA_MODULES"
+      ":"
+      (lib.makeSearchPath "lib/gio/modules" desktopPackageClosure)
     ]
     ++ lib.optionals cfg.web.enable [
       "--prefix"
@@ -46,21 +64,9 @@
       pkgs.symlinkJoin {
         name = "dioxus-cli-${cfg.package.version}-configured";
         paths = [cfg.package];
-        nativeBuildInputs =
-          [pkgs.makeWrapper]
-          ++ lib.optionals cfg.desktop.enable [
-            pkgs.pkg-config
-            pkgs.wrapGAppsHook3
-          ];
-        buildInputs = lib.optionals cfg.desktop.enable desktopPackages;
-        dontWrapGApps = true;
-        postFixup = ''
-          wrapperArgs=(${lib.escapeShellArgs dioxusWrapperArgs})
-          ${lib.optionalString cfg.desktop.enable ''
-            wrapperArgs+=(--prefix PKG_CONFIG_PATH : "$PKG_CONFIG_PATH")
-            wrapperArgs+=("''${gappsWrapperArgs[@]}")
-          ''}
-          wrapProgram "$out/bin/dx" "''${wrapperArgs[@]}"
+        nativeBuildInputs = [pkgs.makeWrapper];
+        postBuild = ''
+          wrapProgram "$out/bin/dx" ${lib.escapeShellArgs dioxusWrapperArgs}
         '';
       }
     else cfg.package;

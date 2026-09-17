@@ -980,7 +980,7 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 
 ## Dioxus desktop, web, and Android development
 
-`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive GTK3, WebKitGTK 4.1, DBus, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15] The generated wrapper evaluates the GTK setup hooks and captures their propagated GLib/GIO/GObject, Pango, ATK, Cairo, GDK Pixbuf, pkg-config, GSettings, and runtime-library environment rather than maintaining a fragile hand-written list of direct `.pc` paths.
+`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive GTK3, WebKitGTK 4.1, DBus, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15] The generated wrapper computes the full propagated GTK/WebKit dependency closure and derives its GLib/GIO/GObject, Pango, ATK, Cairo, GDK Pixbuf, pkg-config, data, GIO-module, and runtime-library paths. This avoids both a fragile list of direct `.pc` paths and dependence on a later fixup hook that may not run for `symlinkJoin`.
 
 | Component | Selected implementation |
 |---|---|
@@ -1045,7 +1045,7 @@ DX_WRAPPER="$(readlink -f "$(command -v dx)")"
 grep 'PKG_CONFIG_PATH' "$DX_WRAPPER"
 ```
 
-The Dioxus module uses Nix build inputs and the GTK3 GApp setup hook to collect both direct and propagated desktop dependencies. It then prepends the captured `PKG_CONFIG_PATH`, GApp environment, and transitive runtime-library closure for `dx` and every Cargo process it starts. A plain `pkg-config` invocation outside `dx` intentionally does not inherit that scoped environment.
+The Dioxus module closes over both direct and propagated desktop dependencies, derives `PKG_CONFIG_PATH`, `LD_LIBRARY_PATH`, `XDG_DATA_DIRS`, and `GIO_EXTRA_MODULES`, and writes those values into the `dx` wrapper during `postBuild`. Every Cargo process started by `dx` therefore inherits the same deterministic environment. A plain `pkg-config` invocation outside `dx` intentionally does not inherit that scoped environment.
 
 Plain Cargo remains an alternative without the same integrated development server:
 
