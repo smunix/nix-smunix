@@ -1,0 +1,4 @@
+{
+  channel = "stable";
+  version = "1.98.1";
+}

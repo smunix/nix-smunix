@@ -26,7 +26,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   meta = {
-    description = "Static BPF linker matched to the pinned Aya Rust nightly";
+    description = "Static BPF linker for the pinned Aya Rust toolchain";
     homepage = "https://aya-rs.dev";
     license = with lib.licenses; [asl20 mit];
     mainProgram = "bpf-linker";

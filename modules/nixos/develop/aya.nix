@@ -14,9 +14,16 @@
     export RUSTC="${rustToolchain}/bin/rustc"
     export RUSTDOC="${rustToolchain}/bin/rustdoc"
     export RUST_SRC_PATH="${rustToolchain}/lib/rustlib/src/rust/library"
+    ${lib.optionalString (rustCfg.resolvedChannel == "stable") ''
+      # Aya's tier-3 BPF target still relies on Cargo's unstable build-std support.
+      export RUSTC_BOOTSTRAP=1
+    ''}
     exec "${rustToolchain}/bin/cargo" "$@"
   '';
   ayaRustc = pkgs.writeShellScriptBin "aya-rustc" ''
+    ${lib.optionalString (rustCfg.resolvedChannel == "stable") ''
+      export RUSTC_BOOTSTRAP=1
+    ''}
     exec "${rustToolchain}/bin/rustc" "$@"
   '';
 in {
@@ -38,7 +45,7 @@ in {
       }
       {
         assertion = rustCfg.enable;
-        message = "modules.develop.aya requires modules.develop.rust.enable so both features share one configured nightly toolchain.";
+        message = "modules.develop.aya requires modules.develop.rust.enable so both features share one configured Rust toolchain.";
       }
     ];
 
@@ -63,6 +70,8 @@ in {
       shellAliases.ebpf-cargo = "aya-cargo";
       variables = {
         AYA_RUST_TOOLCHAIN = "${rustToolchain}";
+        AYA_RUST_CHANNEL = rustCfg.resolvedChannel;
+        AYA_RUST_VERSION = rustCfg.resolvedVersion;
         AYA_RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
       };
     };

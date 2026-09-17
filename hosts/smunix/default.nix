@@ -104,7 +104,8 @@
       python.enable = true;
       rust = {
         enable = true;
-        nightlyVersion = "2026-07-15";
+        channel = "stable";
+        version = "1.98.1";
       };
       typst.enable = true;
     };

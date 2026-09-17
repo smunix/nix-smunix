@@ -5,6 +5,7 @@
   ...
 }: let
   hostSshPublicKey = builtins.getEnv "AYA_SSH_PUBLIC_KEY";
+  rustPolicy = import ./rust-toolchain-policy.nix;
 in {
   imports = ["${modulesPath}/virtualisation/qemu-vm.nix"];
 
@@ -61,14 +62,24 @@ in {
     };
   };
 
-  environment.systemPackages = with pkgs; [
-    aya-tool
-    bpftools
-    bpftrace
-    iproute2
-    pahole
-    tcpdump
-  ];
+  environment = {
+    systemPackages = with pkgs; [
+      aya-tool
+      bpf-linker-aya
+      bpftools
+      bpftrace
+      iproute2
+      pahole
+      rust-toolchain-smunix
+      tcpdump
+    ];
+    variables = {
+      RUSTC_BOOTSTRAP = "1";
+      RUST_SRC_PATH = "${pkgs.rust-toolchain-smunix}/lib/rustlib/src/rust/library";
+      SMUNIX_RUST_CHANNEL = rustPolicy.channel;
+      SMUNIX_RUST_VERSION = rustPolicy.version;
+    };
+  };
 
   virtualisation = {
     memorySize = 4096;

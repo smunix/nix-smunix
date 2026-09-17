@@ -96,7 +96,8 @@ modules = {
     python.enable = true;
     rust = {
       enable = true;
-      nightlyVersion = "2026-07-15";
+      channel = "stable";
+      version = "1.98.1";
     };
     typst.enable = true;
     # quarto.enable = true;
@@ -877,13 +878,13 @@ Do not commit passwords, API tokens, recovery codes, private SSH keys, age ident
 
 ## Aya and eBPF development
 
-The problem with developing eBPF directly on the workstation is that loading test programs requires elevated kernel access and a failed program can disturb host networking or security hooks. `modules.develop.aya` therefore installs the build and inspection tools on `smunix`, while `ebpf-vm` runs programs in a disposable NixOS VM with the required BPF kernel features. Aya development requires Rust nightly with `rust-src`, `bpf-linker`, `cargo-generate`, and `bpftool`.[11] The `aya-tool` command generates Rust bindings for selected Linux kernel types and requires both `bpftool` and `bindgen`; the packaged wrapper supplies those dependencies automatically.[13]
+The problem with developing eBPF directly on the workstation is that loading test programs requires elevated kernel access and a failed program can disturb host networking or security hooks. `modules.develop.aya` therefore installs the build and inspection tools on `smunix`, while `ebpf-vm` runs programs in a disposable NixOS VM with the required BPF kernel features. Aya’s tier-three BPF target still relies on Cargo’s unstable `build-std` support.[11] The host nevertheless uses the same stable rustc 1.98.1 binary everywhere: only the `aya-cargo` and `aya-rustc` wrappers scope `RUSTC_BOOTSTRAP=1` so Aya can compile `core` for BPF without installing a second nightly compiler. The `aya-tool` command generates Rust bindings for selected Linux kernel types and requires both `bpftool` and `bindgen`; the packaged wrapper supplies those dependencies automatically.[13]
 
-The Rust module is the single owner of the host toolchain version. `modules.develop.rust.nightlyVersion = "2026-07-15"` resolves a rust-overlay toolchain containing Cargo, rustc, rustfmt, Clippy, rust-analyzer, and `rust-src`. Aya requires the Rust module and reuses its read-only resolved `toolchain`; it no longer has a separate version option that can drift out of sync with the linker.
+The Rust module is the single owner of the host toolchain. `modules.develop.rust.channel = "stable"` and `version = "1.98.1"` resolve one rust-overlay toolchain containing Cargo, rustc, rustfmt, Clippy, rust-analyzer, and `rust-src`. The same policy also builds the repository’s Rust utilities, including `aya-tool`, Dioxus CLI, and the exact wasm-bindgen CLI. Aya and Dioxus reuse the read-only resolved `toolchain`; neither feature owns a second host compiler version. The deprecated `nightlyVersion` option remains as a temporary compatibility alias for other hosts, but `smunix` no longer selects it.
 
 | Component | Selected implementation |
 |---|---|
-| Rust toolchain | Shared `modules.develop.rust.nightlyVersion = "2026-07-15"`, with `rust-src`, rustfmt, Clippy, and rust-analyzer |
+| Rust toolchain | Shared stable `modules.develop.rust.version = "1.98.1"`, with `rust-src`, rustfmt, Clippy, and rust-analyzer; the same stable compiler and `bpf-linker` are installed inside `ebpf-vm` |
 | BPF linker | Official static `bpf-linker` 0.11.1 x86_64-musl artifact with the supplied fixed hash |
 | Build command | `aya-cargo`, with `ebpf-cargo` as a shell alias |
 | Kernel bindings | `aya-tool` with wrapped `bpftool`, `bindgen`, and libclang dependencies; installed on both the host and VM |
@@ -893,7 +894,7 @@ The Rust module is the single owner of the host toolchain version. `modules.deve
 | Shared source | The requested host directory is mounted at `/host` through VirtFS/9P[12] |
 | SSH access | Host loopback `127.0.0.1:2222` forwards to guest TCP port 22; only `dev` may log in, with automatic host public-key authorization and `dev` password fallback |
 
-Plain `cargo`, `rustc`, `rustfmt`, `clippy`, and `rust-analyzer` use the configured nightly throughout the host. `aya-cargo` is the eBPF-specific wrapper: it selects that same nightly explicitly, exports its Rust source tree, and puts the exact `bpf-linker` first on `PATH`:
+Plain `cargo`, `rustc`, `rustfmt`, `clippy`, and `rust-analyzer` use stable 1.98.1 throughout the host. `aya-cargo` is the eBPF-specific wrapper: it selects that same stable toolchain explicitly, exports its Rust source tree, enables `RUSTC_BOOTSTRAP=1` only for Aya’s unstable BPF `build-std` operation, and puts the exact `bpf-linker` first on `PATH`:
 
 ```sh
 aya-cargo build
@@ -967,7 +968,7 @@ ssh-keygen -R '[127.0.0.1]:2222'
 ssh -o StrictHostKeyChecking=accept-new -p 2222 dev@127.0.0.1
 ```
 
-The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes `aya-tool`, `bpftool`, `bpftrace`, `pahole`, `iproute2`, and `tcpdump`. **The `dev`/`dev` credentials, passwordless sudo, and root console autologin are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
+The VM enables `BPF_SYSCALL`, JIT compilation, BTF kernel metadata, BPF LSM support, cgroups, namespaces, seccomp filtering, and audit support. It explicitly places `bpf` in the active LSM order. The guest includes stable Rust 1.98.1 with `rust-src`, `bpf-linker`, `aya-tool`, `bpftool`, `bpftrace`, `pahole`, `iproute2`, and `tcpdump`. Because the entire guest exists specifically for Aya development, it scopes `RUSTC_BOOTSTRAP=1` to the VM environment so the tier-three BPF target can use `build-std` without a nightly rustc binary. **The `dev`/`dev` credentials, passwordless sudo, and root console autologin are intentionally unsafe and belong only to the disposable laboratory VM; never copy them to a persistent host or production image.**
 
 Inside the VM, inspect the environment with:
 
@@ -983,12 +984,12 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 
 ## Dioxus desktop, web, and Android development
 
-`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared Rust nightly. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive GTK3, WebKitGTK 4.1, DBus, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15] The generated wrapper computes the full propagated GTK/WebKit dependency closure and derives its GLib/GIO/GObject, Pango, ATK, Cairo, GDK Pixbuf, pkg-config, data, GIO-module, and runtime-library paths. This avoids both a fragile list of direct `.pc` paths and dependence on a later fixup hook that may not run for `symlinkJoin`.
+`modules.develop.dioxus` installs the pinned Dioxus **0.8-series** `dx` CLI and integrates it with the shared stable Rust 1.98.1 toolchain. The newest published 0.8 CLI is currently the prerelease `0.8.0-alpha.1`, while 0.7.10 remains the maximum stable release; this configuration deliberately selects the requested 0.8 series and pins its crate source and lockfile.[18] Linux desktop applications additionally receive GTK3, WebKitGTK 4.1, DBus, xdotool, OpenSSL, app-indicator, librsvg, Clang, LLD, Make, and pkg-config support required by Dioxus desktop builds.[15] The generated wrapper computes the full propagated GTK/WebKit dependency closure and derives its GLib/GIO/GObject, Pango, ATK, Cairo, GDK Pixbuf, pkg-config, data, GIO-module, and runtime-library paths. This avoids both a fragile list of direct `.pc` paths and dependence on a later fixup hook that may not run for `symlinkJoin`.
 
 | Component | Selected implementation |
 |---|---|
 | Dioxus CLI | Reproducibly packaged `dioxus-cli` 0.8.0-alpha.1, exposed as `dx`; automatic tool downloads and telemetry are disabled |
-| Rust toolchain | Shared nightly `2026-07-15` (Rust 1.99), satisfying the CLI’s Rust 1.93 minimum and extended declaratively with WebAssembly plus all four Android targets |
+| Rust toolchain | Shared stable Rust 1.98.1, satisfying the CLI’s Rust 1.93 minimum and extended declaratively with WebAssembly plus all four Android targets |
 | Web | `wasm32-unknown-unknown`, exact `wasm-bindgen-cli` 0.2.128, and Binaryen `wasm-opt` |
 | Android Studio | 2025.3.4.7 |
 | Android platform and Build Tools | API 35 and Build Tools 35.0.0 |
@@ -1063,7 +1064,7 @@ Plain Cargo remains an alternative without the same integrated development serve
 cargo run
 ```
 
-Android support is fully declarative. Do **not** run `rustup target add`: the Rust module already includes `aarch64-linux-android`, `armv7-linux-androideabi`, `i686-linux-android`, and `x86_64-linux-android` in the resolved nightly toolchain, matching the targets recommended by the Dioxus mobile guide.[16]
+Android support is fully declarative. Do **not** run `rustup target add`: the Rust module already includes `aarch64-linux-android`, `armv7-linux-androideabi`, `i686-linux-android`, and `x86_64-linux-android` in the resolved stable 1.98.1 toolchain, matching the targets recommended by the Dioxus mobile guide.[16]
 
 Android Studio and command-line tools use these generated paths:
 
