@@ -45,10 +45,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
     substituteInPlace src/build/link.rs \
       --replace-fail \
-        '        // And now we can run the linker with our new args
-        let linker = self.select_linker()?;
-
-        tracing::trace!("Fat linking with args: {:?} {:#?}", linker, args);' \
+        '        tracing::trace!("Fat linking with args: {:?} {:#?}", linker, args);' \
         '        // Make the Nix-provided libclang directory explicit for full fat-binary linking.
         if cfg!(target_os = "linux") {
             if let Ok(libclang_path) = std::env::var("LIBCLANG_PATH") {
@@ -58,9 +55,6 @@ rustPlatform.buildRustPackage (finalAttrs: {
                 }
             }
         }
-
-        // And now we can run the linker with our new args
-        let linker = self.select_linker()?;
 
         tracing::trace!("Fat linking with args: {:?} {:#?}", linker, args);'
   '';
