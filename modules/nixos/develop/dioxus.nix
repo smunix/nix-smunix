@@ -200,6 +200,7 @@
         uid="$(${pkgs.coreutils}/bin/id -u ${lib.escapeShellArg primaryUser})"
         ${config.systemd.package}/bin/systemctl start "user@$uid.service"
         ${caddyUserSystemctl} daemon-reload
+        ${caddyUserSystemctl} reset-failed dioxus-caddy.service || true
         ${caddyUserSystemctl} restart dioxus-caddy.service
         ;;
       pre-down|down)
