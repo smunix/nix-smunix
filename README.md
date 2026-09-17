@@ -996,7 +996,7 @@ The first VM invocation may build or download a substantial NixOS and QEMU closu
 
 Without `wasm32-unknown-unknown` in the active Rust sysroot, `dx serve --platform web` attempts `rustup target add`. Nix-managed hosts do not install or mutate toolchains through rustup, so that fallback fails with `No such file or directory`. Enabling `modules.develop.dioxus.web` adds the target to the shared rust-overlay toolchain and installs `wasm-opt` declaratively.
 
-The `wasm-bindgen` crate embedded in an application and the external `wasm-bindgen` command must use the same schema version. The Damabase application requires 0.2.128, so this repository packages that exact crates.io release, wraps it into `dx`, and selects it through `modules.develop.dioxus.web.wasmBindgenCliPackage`.[19] Override that package option deliberately when a future project lockfile requires another version.
+The `wasm-bindgen` crate embedded in an application and the external `wasm-bindgen` command must use the same schema version. The Damabase application requires 0.2.128, so this repository packages that exact crates.io release and selects it through `modules.develop.dioxus.web.wasmBindgenCliPackage`.[19] The module-generated `dx` wrapper prepends the selected package to `PATH`, ensuring it wins over older profile or Cargo-installed executables. Override that package option deliberately when a future project lockfile requires another version.
 
 Verify web tooling after rebuilding:
 

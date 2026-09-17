@@ -34,17 +34,35 @@
     (lib.makeSearchPath "lib/pkgconfig" desktopDevelopmentOutputs)
     (lib.makeSearchPath "share/pkgconfig" desktopDevelopmentOutputs)
   ];
+  dioxusWrapperArgs =
+    lib.optionals cfg.desktop.enable [
+      "--prefix"
+      "PKG_CONFIG_PATH"
+      ":"
+      desktopPkgConfigPath
+      "--prefix"
+      "LD_LIBRARY_PATH"
+      ":"
+      (lib.makeLibraryPath desktopRuntimeLibraries)
+    ]
+    ++ lib.optionals cfg.web.enable [
+      "--prefix"
+      "PATH"
+      ":"
+      (lib.makeBinPath [
+        cfg.web.wasmBindgenCliPackage
+        cfg.web.wasmOptPackage
+      ])
+    ];
   dioxusCli =
-    if cfg.desktop.enable
+    if dioxusWrapperArgs != []
     then
       pkgs.symlinkJoin {
-        name = "dioxus-cli-${cfg.package.version}-desktop";
+        name = "dioxus-cli-${cfg.package.version}-configured";
         paths = [cfg.package];
         nativeBuildInputs = [pkgs.makeWrapper];
         postBuild = ''
-          wrapProgram "$out/bin/dx" \
-            --prefix PKG_CONFIG_PATH : "${desktopPkgConfigPath}" \
-            --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath desktopRuntimeLibraries}"
+          wrapProgram "$out/bin/dx" ${lib.escapeShellArgs dioxusWrapperArgs}
         '';
       }
     else cfg.package;
