@@ -212,9 +212,17 @@
   androidEnvironment = pkgs.androidenv.override {
     licenseAccepted = true;
   };
+  effectivePlatformVersions =
+    if cfg.android.platformVersion != null
+    then [cfg.android.platformVersion]
+    else cfg.android.platformVersions;
+  effectiveBuildToolsVersions =
+    if cfg.android.buildToolsVersion != null
+    then [cfg.android.buildToolsVersion]
+    else cfg.android.buildToolsVersions;
   androidPackages = androidEnvironment.composeAndroidPackages {
-    platformVersions = [cfg.android.platformVersion];
-    buildToolsVersions = [cfg.android.buildToolsVersion];
+    platformVersions = effectivePlatformVersions;
+    buildToolsVersions = effectiveBuildToolsVersions;
     includeCmake = true;
     cmakeVersions = [cfg.android.cmakeVersion];
     includeNDK = true;
@@ -364,16 +372,34 @@ in {
         description = "Install Android Studio alongside the declarative SDK and NDK.";
       };
 
+      platformVersions = lib.mkOption {
+        type = lib.types.listOf lib.types.nonEmptyStr;
+        default = [
+          "34"
+          "35"
+        ];
+        description = "Android SDK platform versions included in the declarative SDK.";
+      };
+
+      buildToolsVersions = lib.mkOption {
+        type = lib.types.listOf lib.types.nonEmptyStr;
+        default = [
+          "34.0.0"
+          "35.0.0"
+        ];
+        description = "Android SDK Build Tools versions included in the declarative SDK.";
+      };
+
       platformVersion = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = "35";
-        description = "Android SDK platform version included in the declarative SDK.";
+        type = lib.types.nullOr lib.types.nonEmptyStr;
+        default = null;
+        description = "Deprecated compatibility option. When set, restricts platformVersions to only this version.";
       };
 
       buildToolsVersion = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = "35.0.0";
-        description = "Android SDK Build Tools version.";
+        type = lib.types.nullOr lib.types.nonEmptyStr;
+        default = null;
+        description = "Deprecated compatibility option. When set, restricts buildToolsVersions to only this version.";
       };
 
       ndkVersion = lib.mkOption {

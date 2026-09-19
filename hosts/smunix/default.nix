@@ -101,8 +101,14 @@
         };
         android = {
           enable = true;
-          platformVersion = "35";
-          buildToolsVersion = "35.0.0";
+          platformVersions = [
+            "34"
+            "35"
+          ];
+          buildToolsVersions = [
+            "34.0.0"
+            "35.0.0"
+          ];
           ndkVersion = "27.2.12479018";
           cmakeVersion = "3.22.1";
           includeEmulator = true;
