@@ -17,23 +17,21 @@ pkgs: let
   wasmBindgenCli = pkgs.callPackage ./wasm-bindgen-cli-0_2_128.nix {
     inherit rustPlatform;
   };
-in
-  {
-    rust-toolchain-smunix = rustDeveloperToolchain;
-    aya-tool = pkgs.callPackage ./aya-tool.nix {
-      inherit rustPlatform;
-    };
-    bpf-linker-aya = pkgs.callPackage ./bpf-linker.nix {};
-    dioxus-cli_0_8 = pkgs.callPackage ./dioxus-cli-0_8.nix {
-      inherit rustPlatform;
-      rustfmt = rustDeveloperToolchain;
-      wasm-bindgen-cli_0_2_128 = wasmBindgenCli;
-    };
-    wasm-bindgen-cli-0_2_128 = wasmBindgenCli;
-  }
-  // pkgs.lib.optionalAttrs (pkgs.lib.elem pkgs.stdenv.hostPlatform.system [
-    "x86_64-linux"
-    "aarch64-linux"
-  ]) {
-    google-antigravity-cli = pkgs.callPackage ./google-antigravity-cli.nix {};
-  }
+# Keep this export set unconditional and lazy: the additions overlay passes its
+# `final` package set here, so inspecting `pkgs.stdenv` while constructing the
+# set creates an overlay fixed-point recursion. Filter per-system outputs in
+# parts/per-system.nix instead; each package may validate its platform when used.
+in {
+  rust-toolchain-smunix = rustDeveloperToolchain;
+  google-antigravity-cli = pkgs.callPackage ./google-antigravity-cli.nix {};
+  aya-tool = pkgs.callPackage ./aya-tool.nix {
+    inherit rustPlatform;
+  };
+  bpf-linker-aya = pkgs.callPackage ./bpf-linker.nix {};
+  dioxus-cli_0_8 = pkgs.callPackage ./dioxus-cli-0_8.nix {
+    inherit rustPlatform;
+    rustfmt = rustDeveloperToolchain;
+    wasm-bindgen-cli_0_2_128 = wasmBindgenCli;
+  };
+  wasm-bindgen-cli-0_2_128 = wasmBindgenCli;
+}
