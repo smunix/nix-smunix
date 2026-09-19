@@ -33,5 +33,7 @@ in {
     rustfmt = rustDeveloperToolchain;
     wasm-bindgen-cli_0_2_128 = wasmBindgenCli;
   };
+  wasm-bindgen-cli_0_2_128 = wasmBindgenCli;
+  # Compatibility alias for the initially exported misspelling.
   wasm-bindgen-cli-0_2_128 = wasmBindgenCli;
 }
