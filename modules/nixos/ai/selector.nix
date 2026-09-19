@@ -7,8 +7,14 @@
 }: let
   cfg = config.modules.ai;
   clients = {
+    antigravity = pkgs.google-antigravity-cli;
     kimi = pkgs.kimi-code;
   };
+  selectedClients =
+    if cfg.client != null
+    then [cfg.client]
+    else cfg.clients;
+  kimiEnabled = lib.elem "kimi" selectedClients;
 
   installKimiConfig = pkgs.writeShellScript "install-kimi-code-config" ''
     set -eu
@@ -66,13 +72,24 @@
   '';
 in {
   options.modules.ai = {
-    enable = lib.mkEnableOption "an AI coding client";
+    enable = lib.mkEnableOption "AI coding clients";
+
+    clients = lib.mkOption {
+      type = lib.types.listOf (lib.types.enum (lib.attrNames clients));
+      default = ["kimi"];
+      apply = lib.unique;
+      example = [
+        "kimi"
+        "antigravity"
+      ];
+      description = "AI coding clients to install together.";
+    };
 
     client = lib.mkOption {
-      type = lib.types.enum ["kimi"];
-      default = "kimi";
+      type = lib.types.nullOr (lib.types.enum (lib.attrNames clients));
+      default = null;
       example = "kimi";
-      description = "AI coding client to install. Additional clients can be added to the selector later.";
+      description = "Deprecated compatibility option for selecting one AI client; use clients instead.";
     };
 
     kimi = {
@@ -94,24 +111,34 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    user.packages = [
-      clients.${cfg.client}
-      pkgs.age
-    ];
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      assertions = [
+        {
+          assertion = selectedClients != [];
+          message = "modules.ai.clients must select at least one AI coding client when modules.ai.enable is true.";
+        }
+      ];
 
-    hm.systemd.user.services.kimi-code-config = lib.mkIf (cfg.client == "kimi") {
-      Unit = {
-        Description = "Install the decrypted Kimi Code configuration";
-        Documentation = "man:age(1)";
+      warnings = lib.optional (cfg.client != null) "modules.ai.client is deprecated; use modules.ai.clients instead.";
+
+      user.packages = map (name: clients.${name}) selectedClients ++ lib.optional kimiEnabled pkgs.age;
+    }
+
+    (lib.mkIf kimiEnabled {
+      hm.systemd.user.services.kimi-code-config = {
+        Unit = {
+          Description = "Install the decrypted Kimi Code configuration";
+          Documentation = "man:age(1)";
+        };
+
+        Service = {
+          Type = "oneshot";
+          ExecStart = installKimiConfig;
+        };
+
+        Install.WantedBy = ["default.target"];
       };
-
-      Service = {
-        Type = "oneshot";
-        ExecStart = installKimiConfig;
-      };
-
-      Install.WantedBy = ["default.target"];
-    };
-  };
+    })
+  ]);
 }

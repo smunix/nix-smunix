@@ -27,7 +27,10 @@ Each NixOS feature owns an option below the `modules` namespace. The `smunix` ho
 modules = {
   ai = {
     enable = true;
-    client = "kimi";
+    clients = [
+      "kimi"
+      "antigravity"
+    ];
   };
 
   networking.networkManager.enable = true;
@@ -266,7 +269,17 @@ Prepare OBS once through its GUI by creating a collection, profile, and scene na
 
 After routing is ready, the service starts the saved collection, profile, and scene with `--startvirtualcam`. It verifies that `/dev/video10` becomes capture-capable before considering startup successful. Early OBS exit, missing devices, missing audio, or a virtual-camera readiness timeout causes cleanup and a failed unit state; systemd retries after five seconds, with at most three failed starts in two minutes. Desktop notifications report connection and virtual-camera failure states. The graphical-session dependency also handles a camera connected before login.
 
-The AI module provides one host-level switch and a typed client selector. Selecting `"kimi"` installs the upstream Kimi Code package exposed as `pkgs.kimi-code` by the repository overlay; run it with `kimi`. The selector currently accepts only Kimi, while its package map and enum provide the extension point for a future Claude Code client. For Kimi, the module also decrypts the host-specific age payload from the private input at user-login time and installs `~/.kimi-code/config.toml` with mode `0600`; the plaintext API key never enters the Nix store.
+The AI module provides one host-level switch and a typed `clients` list, so several coding agents can be installed together. The `smunix` host selects both `"kimi"` and `"antigravity"`. Kimi Code remains exposed as `pkgs.kimi-code` by its upstream flake overlay and runs with `kimi`. Its host-specific age payload is decrypted from the private input at user login and atomically installed as `~/.kimi-code/config.toml` with mode `0600`; the plaintext API key never enters the Nix store. The old singular `modules.ai.client` option remains as a deprecated compatibility interface and overrides `clients` when explicitly set.
+
+Google Antigravity CLI is packaged locally as `pkgs.google-antigravity-cli` from Google's official Linux release archive, pinned to version 1.2.6 and verified by the published SHA-512 digest. Run it with:
+
+```sh
+agy
+```
+
+On first launch, `agy` uses the Linux Secret Service over D-Bus when an existing Antigravity token is available; otherwise it opens the default browser for Google sign-in. An SSH session receives a URL and authorization code instead. The Nix wrapper sets `AGY_CLI_DISABLE_AUTO_UPDATE=true`, because immutable Nix store binaries must be upgraded by changing the package version and hashes in this repository rather than with `agy update`.[25] [26]
+
+No Google credential is written into the Nix store. For optional headless API-key authentication, set `modelProvider` to `"gemini"` in `~/.gemini/antigravity-cli/settings.json` and provide `GEMINI_API_KEY` through a secret-bearing runtime environment; defining the variable alone does not activate API-key mode. Do not commit that key to this repository. Antigravity is an agent capable of editing files and executing commands, so review its permission prompts and Google's terms and interaction-data policy before use.[25] [27]
 
 Typst provides the Typst compiler, Tinymist language server, and Typstyle formatter. Quarto remains available as an opt-in publishing feature through `modules.develop.quarto.enable`.
 
@@ -1202,3 +1215,6 @@ The first rebuild is large because Android Studio, the SDK, NDK, emulator, syste
 [22]: https://networkmanager.dev/docs/api/latest/NetworkManager-dispatcher.html "NetworkManager dispatcher events and interface arguments"
 [23]: https://www.freedesktop.org/software/systemd/man/latest/loginctl.html "systemd user lingering"
 [24]: https://www.freedesktop.org/software/systemd/man/255/systemd.exec.html "systemd user-service namespace and capability semantics"
+[25]: https://antigravity.google/docs/cli/install/ "Google Antigravity CLI installation and authentication"
+[26]: https://antigravity.google/docs/cli/troubleshooting/ "Google Antigravity CLI updater and keyring troubleshooting"
+[27]: https://antigravity.google/terms "Google Antigravity terms of service"

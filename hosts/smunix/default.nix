@@ -15,7 +15,10 @@
   modules = {
     ai = {
       enable = true;
-      client = "kimi";
+      clients = [
+        "kimi"
+        "antigravity"
+      ];
     };
 
     networking.networkManager.enable = true;
