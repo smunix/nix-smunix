@@ -264,6 +264,14 @@
         videos.enable = true;
       };
     };
+
+    ide = {
+      enable = true;
+      ides = [
+        "antigravity"
+        "zed"
+      ];
+    };
   };
 
   hm.modules = {

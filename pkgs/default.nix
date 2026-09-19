@@ -24,6 +24,7 @@ pkgs: let
 in {
   rust-toolchain-smunix = rustDeveloperToolchain;
   google-antigravity-cli = pkgs.callPackage ./google-antigravity-cli.nix {};
+  google-antigravity-ide = pkgs.callPackage ./google-antigravity-ide.nix {};
   aya-tool = pkgs.callPackage ./aya-tool.nix {
     inherit rustPlatform;
   };

@@ -33,6 +33,14 @@ modules = {
     ];
   };
 
+  ide = {
+    enable = true;
+    ides = [
+      "antigravity"
+      "zed"
+    ];
+  };
+
   networking.networkManager.enable = true;
   hardware = {
     pipewire.enable = true;
@@ -281,6 +289,21 @@ On first launch, `agy` uses the Linux Secret Service over D-Bus when an existing
 
 No Google credential is written into the Nix store. For optional headless API-key authentication, set `modelProvider` to `"gemini"` in `~/.gemini/antigravity-cli/settings.json` and provide `GEMINI_API_KEY` through a secret-bearing runtime environment; defining the variable alone does not activate API-key mode. Do not commit that key to this repository. Antigravity is an agent capable of editing files and executing commands, so review its permission prompts and Google's terms and interaction-data policy before use.[25] [27]
 
+A separate `modules.ide` module manages full GUI IDEs as a distinct concern from AI coding clients. The distinction matters because IDEs are graphical applications with their own update cadences, while `modules.ai.clients` groups command-line coding agents that share a tighter integration contract. The two namespaces are independent: enabling `modules.ai` and `modules.ide` together is normal; either can be omitted without affecting the other. `smunix` enables both, selecting `antigravity` and `zed` under `modules.ide`.
+
+Zed is installed through `modules.ide.ides` alongside Antigravity IDE. Its home-manager program configuration—`base_keymap = "VSCode"`, `vim_mode`, and font sizes scaled by the compact-font factor—is still declared through `modules.desktop.editors.zed.enable`; that option controls the program settings while `modules.ide` controls the installed package. Both options must be enabled together for a fully configured Zed.
+
+Google Antigravity IDE is packaged locally as `pkgs.google-antigravity-ide` from Google's official Linux release archive, pinned to version 2.5.5 and verified by the published SHA-512 digest. It is a standalone Electron application derived from VS Code and ships with its own Chromium runtime. The Nix derivation uses `autoPatchelfHook` to satisfy the Chromium shared-library dependencies declaratively and installs a `.desktop` entry and application icon. Two command names are available after installation:
+
+```sh
+agy-ide        # short alias, consistent with the agy CLI naming convention
+antigravity-ide  # explicit form; both invoke the same binary
+```
+
+`agy-ide` is the `mainProgram`, so `nix run .#google-antigravity-ide` and `nix shell` resolve to it. Both wrappers set `ELECTRON_OZONE_PLATFORM_HINT=auto` so the IDE selects Wayland rendering automatically when running under Niri or Plasma Wayland, and falls back to XWayland otherwise. The Niri workspace table routes `antigravity-ide` to the `programming` workspace alongside `zeditor`.[28]
+
+The `modules.ide.ides` option accepts a list so multiple IDEs can coexist. The current recognized values are `"antigravity"` and `"zed"`. A deprecated single-selection shim `modules.ide.ide` is available for forward compatibility but emits a warning; use `modules.ide.ides` instead. An assertion rejects enabling `modules.ide` with an empty `ides` list.
+
 Typst provides the Typst compiler, Tinymist language server, and Typstyle formatter. Quarto remains available as an opt-in publishing feature through `modules.develop.quarto.enable`.
 
 Nushell and the terminal selector remain separate because Nushell is the user’s login shell while Ghostty and WezTerm are graphical terminal emulators. Ghostty is the selected default and both terminals explicitly start Nushell; WezTerm remains installed as an alternative. Starship supplies the Nushell prompt. The selected editor is exported as `EDITOR` and `VISUAL` through both the system and Home Manager session environments. Zellij remains available as a tmux alternative and opens Nushell panes with Helix as its scrollback editor. Git and Jujutsu are grouped under `modules.vcs`.
@@ -309,7 +332,7 @@ Niri uses resolution-independent widescreen column proportions. Shell, viewer, a
 | `Super+1` | `shell` | WezTerm, Ghostty, XTerm |
 | `Super+2` | `internet` | Firefox, Brave |
 | `Super+3` | `viewers` | Okular, Evince, Zathura, MPV, Xpdf; TDF runs inside the terminal |
-| `Super+4` | `programming` | Zed (`zeditor`) |
+| `Super+4` | `programming` | Zed (`zeditor`), Antigravity IDE (`agy-ide`) |
 | `Super+5` | `explorers` | Dolphin |
 | `Super+6` | `chats` | Discord, Signal Desktop |
 | `Super+7` | `dumpster` | Any normal application not matched by a more specific rule |
@@ -1218,3 +1241,4 @@ The first rebuild is large because Android Studio, the SDK, NDK, emulator, syste
 [25]: https://antigravity.google/docs/cli/install/ "Google Antigravity CLI installation and authentication"
 [26]: https://antigravity.google/docs/cli/troubleshooting/ "Google Antigravity CLI updater and keyring troubleshooting"
 [27]: https://antigravity.google/terms "Google Antigravity terms of service"
+[28]: https://antigravity.google/product/antigravity-ide/ "Google Antigravity standalone IDE"
