@@ -10,6 +10,7 @@
   pkg-config,
   rustPlatform,
   rustfmt,
+  stdenv,
   wasm-bindgen-cli_0_2_128,
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -23,45 +24,18 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   cargoLock.lockFile = "${finalAttrs.src}/Cargo.lock";
 
+  patches = [
+    # Injects $LIBRARY_PATH entries as explicit -L flags into Dioxus's custom
+    # fat-linking and incremental thin-linking passes for NixOS C library resolution.
+    ./patches/dioxus-cli-0_8-library-path.patch
+  ];
+
   buildFeatures = [
     "no-downloads"
     "disable-telemetry"
   ];
 
   env.OPENSSL_NO_VENDOR = 1;
-
-  postPatch = ''
-    substituteInPlace src/build/link.rs \
-      --replace-fail \
-        '        out_args.extend(out_arg.iter().map(Into::into));' \
-        '        out_args.extend(out_arg.iter().map(Into::into));
-
-        // Make every Nix-provided native library directory explicit for incremental linking.
-        if cfg!(target_os = "linux") {
-            if let Some(library_path) = std::env::var_os("LIBRARY_PATH") {
-                out_args.extend(std::env::split_paths(&library_path).map(|path| {
-                    format!("-L{}", path.display()).into()
-                }));
-            }
-        }'
-
-    substituteInPlace src/build/link.rs \
-      --replace-fail \
-        '        tracing::trace!("Fat linking with args: {:?} {:#?}", linker, args);' \
-        '        // Make every Nix-provided native library directory explicit for full fat linking.
-        if cfg!(target_os = "linux") {
-            if let Some(library_path) = std::env::var_os("LIBRARY_PATH") {
-                for path in std::env::split_paths(&library_path) {
-                    let search_arg = format!("-L{}", path.display());
-                    if !args.contains(&search_arg) {
-                        args.push(search_arg);
-                    }
-                }
-            }
-        }
-
-        tracing::trace!("Fat linking with args: {:?} {:#?}", linker, args);'
-  '';
 
   nativeBuildInputs = [
     cacert
@@ -74,15 +48,18 @@ rustPlatform.buildRustPackage (finalAttrs: {
   nativeCheckInputs = [rustfmt];
 
   checkFlags = [
+    # Binds 127.0.0.1:0 for reverse proxy testing; fails in hermetic build sandboxes
     "--skip=serve::proxy::test"
+    # Requires upstream Dioxus monorepo workspace dependencies absent in crates.io tarball
     "--skip=test_harnesses::run_harness"
   ];
 
-  postInstall = ''
-    installShellCompletion --cmd dx \
-      --bash <($out/bin/dx completions bash) \
-      --fish <($out/bin/dx completions fish) \
-      --zsh <($out/bin/dx completions zsh)
+  postInstall = lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
+    $out/bin/dx completions bash > dx.bash
+    $out/bin/dx completions fish > dx.fish
+    $out/bin/dx completions zsh > _dx
+
+    installShellCompletion dx.bash dx.fish _dx
   '';
 
   postFixup = ''

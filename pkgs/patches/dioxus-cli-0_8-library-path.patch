@@ -1,0 +1,40 @@
+--- a/src/build/link.rs
++++ b/src/build/link.rs
+@@ -263,6 +263,18 @@
+                 .map(Into::into),
+         );
+         out_args.extend(out_arg.iter().map(Into::into));
++
++        // Make every Nix-provided native library directory explicit for incremental linking.
++        if cfg!(target_os = "linux") {
++            if let Some(library_path) = std::env::var_os("LIBRARY_PATH") {
++                for path in std::env::split_paths(&library_path) {
++                    let search_arg: std::ffi::OsString = format!("-L{}", path.display()).into();
++                    if !out_args.contains(&search_arg) {
++                        out_args.push(search_arg);
++                    }
++                }
++            }
++        }
+ 
+         if cfg!(windows) {
+             let cmd_contents: String = out_args
+@@ -1134,6 +1146,18 @@
+ 
+         // And now we can run the linker with our new args
+         let linker = self.select_linker()?;
++
++        // Make every Nix-provided native library directory explicit for full fat linking.
++        if cfg!(target_os = "linux") {
++            if let Some(library_path) = std::env::var_os("LIBRARY_PATH") {
++                for path in std::env::split_paths(&library_path) {
++                    let search_arg = format!("-L{}", path.display());
++                    if !args.contains(&search_arg) {
++                        args.push(search_arg);
++                    }
++                }
++            }
++        }
+ 
+         tracing::trace!("Fat linking with args: {:?} {:#?}", linker, args);
+         tracing::trace!("Fat linking with env:");
