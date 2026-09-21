@@ -163,6 +163,7 @@
     vcs = {
       git.enable = true;
       jujutsu.enable = true;
+      forges.enable = true;
     };
 
     desktop = {
