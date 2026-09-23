@@ -244,6 +244,7 @@ modules = {
   };
 
   programs = {
+    bottles.enable = true;
     firefox.enable = true;
     obs = {
       enable = true;
@@ -266,6 +267,8 @@ The `tlp` power backend disables the conflicting power-profiles daemon, enables 
 The command-line utility groups install `ack`, `ripgrep`, and `fd` through `modules.programs.cli.search`, and `coreutils` plus `pciutils` through `modules.programs.cli.system`.
 
 The OBS module installs OBS Studio through NixOS's native wrapper. Enabling `modules.programs.obs.ndi` adds `pkgs.obs-studio-plugins.obs-ndi`, a compatibility alias for DistroAV—the plugin currently described by nixpkgs as formerly `obs-ndi`. DistroAV links the proprietary `ndi-6` SDK, so the repository's host package set must continue allowing unfree packages. The OBS overlay narrowly replaces only the `ndi-6` source archive hash because the vendor changed the file served at its stable download URL without the pinned nixpkgs expression being updated; DistroAV is rebuilt against that corrected SDK derivation. Enabling `modules.programs.obs.virtualCamera` configures the `v4l2loopback` kernel module and its `OBS Cam` device. The `virtualCamera.videoNr` option selects the numeric device suffix; `smunix` uses `10`, producing `/dev/video10` instead of competing with physical cameras near `/dev/video0`. Enabling OBS also installs `v4l-utils`, providing `v4l2-ctl` for listing and inspecting the loopback device. The module adds the primary user to `video` and `render`; log out and back in after activation so those supplementary groups are present in the session.
+
+The Bottles module (`modules.programs.bottles.enable`) provisions the Bottles Windows environment manager via Flatpak. It enables the system Flatpak service and XDG desktop portals, provisions the Flathub remote and installs `com.usebottles.bottles` through a declarative systemd oneshot service, grants host filesystem access (`--filesystem=host`) so Windows prefixes can interact with host files and project scratchpads, and provides `bottles` and `bottles-cli` command-line wrappers.
 
 ### OBSBOT Tail 2 automatic startup and DJI Mic 3 audio
 

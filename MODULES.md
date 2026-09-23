@@ -36,6 +36,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Vim | `modules.desktop.editors.vim.enable` | Installs Vim through Home Manager. |
 | Zed | `modules.desktop.editors.zed.enable` | Installs and configures Zed with Vim mode and Nix language support. |
 | Firefox | `modules.programs.firefox.enable` | Enables Firefox. |
+| Bottles | `modules.programs.bottles.enable` | Enables Flatpak, provisions the Flathub remote and Bottles (`com.usebottles.bottles`), grants host filesystem access, and adds `bottles` and `bottles-cli` command-line wrappers. |
 | OBSBOT Tail 2 | `modules.hardware.obsbot.*` | Matches the Tail 2 UVC capture interface, creates `/dev/obsbot-tail2`, remaps its DJI Mic 3 input to the stable `obsbot_dji_mic` PipeWire source, temporarily selects that source as default, and starts OBS through a graphical user service. Device, audio, and virtual-camera readiness checks use bounded retries; repeated failures are rate-limited and audio routing is cleaned up automatically. |
 | OBS Studio | `modules.programs.obs.enable`, `.ndi.enable`, `.virtualCamera.*` | Installs wrapped OBS Studio and `v4l-utils`, optionally adds DistroAV/NDI, configures `/dev/video10`, and grants `video` and `render` access. Tail 2-specific behavior lives exclusively in the separate OBSBOT hardware module. |
 | Search utilities | `modules.programs.cli.search.enable` | Installs `ack`, `ripgrep`, and `fd` as a focused text and filesystem search toolset. |

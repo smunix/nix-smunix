@@ -249,6 +249,7 @@
     };
 
     programs = {
+      bottles.enable = true;
       firefox.enable = true;
       obs = {
         enable = true;
