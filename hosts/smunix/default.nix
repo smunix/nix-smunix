@@ -231,6 +231,9 @@
         discord.enable = true;
         signal.enable = true;
       };
+      socials = {
+        zoom.enable = true;
+      };
       fonts.compact = {
         enable = true;
         reduction = 25;

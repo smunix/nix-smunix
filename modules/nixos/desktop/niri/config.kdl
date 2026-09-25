@@ -114,7 +114,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"(?i)^(discord|signal|signal-desktop)$"#
+    match app-id=r#"(?i)^(discord|signal|signal-desktop|zoom)$"#
     open-maximized false
     default-column-width { proportion 0.5; }
     open-on-workspace "chats"

@@ -337,7 +337,7 @@ Niri uses resolution-independent widescreen column proportions. Shell, viewer, a
 | `Super+3` | `viewers` | Okular, Evince, Zathura, MPV, Xpdf; TDF runs inside the terminal |
 | `Super+4` | `programming` | Zed (`zeditor`), Antigravity IDE (`agy-ide`) |
 | `Super+5` | `explorers` | Dolphin |
-| `Super+6` | `chats` | Discord, Signal Desktop |
+| `Super+6` | `chats` | Discord, Signal Desktop, Zoom |
 | `Super+7` | `dumpster` | Any normal application not matched by a more specific rule |
 
 The Xpdf routing rule is included, but the pinned Xpdf 4.06 package is not installed because nixpkgs marks it insecure due to CVE-2023-26930. Okular, Evince, and Zathura are installed as the graphical document viewers; MPV is installed for media playback. TDF is enabled independently as a terminal PDF viewer; run `tdf document.pdf` from Ghostty, WezTerm, or XTerm.
