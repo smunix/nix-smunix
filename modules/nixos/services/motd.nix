@@ -73,9 +73,25 @@
       ${serviceBlock}
     }
   '';
+
+  bashCondition =
+    if cfg.sshOnly
+    then ''[ -n "$SSH_CONNECTION" ] && [ -t 1 ] && [ -z "''${_MOTD_SHOWN:-}" ]''
+    else ''[ -t 1 ] && [ -z "''${_MOTD_SHOWN:-}" ]'';
+
+  nuCondition =
+    if cfg.sshOnly
+    then "($env.SSH_CONNECTION? != null) and ($env._MOTD_SHOWN? == null)"
+    else "($nu.is-interactive) and ($env._MOTD_SHOWN? == null)";
 in {
   options.modules.services.motd = {
     enable = lib.mkEnableOption "dynamic system MOTD banner using rust-motd";
+
+    sshOnly = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to only display the banner on remote SSH logins (set false for local terminals).";
+    };
 
     networkInterface = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -106,10 +122,17 @@ in {
     environment.systemPackages = [pkgs.rust-motd];
 
     environment.interactiveShellInit = ''
-      if [ -n "$SSH_CONNECTION" ] && [ -t 1 ] && [ -z "''${_MOTD_SHOWN:-}" ]; then
+      if ${bashCondition}; then
         export _MOTD_SHOWN=1
         ${pkgs.rust-motd}/bin/rust-motd ${motdConfig}
       fi
+    '';
+
+    hm.programs.nushell.extraConfig = lib.mkIf (config.modules.shell.default or null == "nushell") ''
+      if ${nuCondition} {
+        $env._MOTD_SHOWN = "1"
+        ^${pkgs.rust-motd}/bin/rust-motd ${motdConfig}
+      }
     '';
   };
 }

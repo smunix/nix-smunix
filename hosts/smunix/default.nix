@@ -274,6 +274,18 @@
         "zed"
       ];
     };
+
+    services.motd = {
+      enable = true;
+      sshOnly = false;
+      networkInterface = "wlp0s20f3";
+      services = {
+        "NetworkManager" = "NetworkManager";
+        "CUPS" = "cups";
+        "TLP" = "tlp";
+        "Bluetooth" = "bluetooth";
+      };
+    };
   };
 
   hm.modules = {
