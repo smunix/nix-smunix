@@ -129,6 +129,16 @@
     };
   };
 
+  # Dynamic system MOTD banner using rust-motd
+  modules.services.motd = {
+    enable = true;
+    networkInterface = "ens3";
+    services = {
+      "Caddy" = "caddy";
+      "Hodari Accounting" = "hodari-accounting";
+    };
+  };
+
   # Basic system packages for remote server administration
   environment.systemPackages = with pkgs; [
     curl
