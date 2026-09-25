@@ -569,7 +569,15 @@ sudo nixos-rebuild build --flake .#smunix
 sudo nixos-rebuild switch --flake .#smunix
 ```
 
-The host’s filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix`. Keep those values aligned with the machine’s generated hardware configuration.
+Evaluate, build, or deploy the remote OVH Cloud VPS (`vps-73025e99`):
+
+```sh
+nix eval .#nixosConfigurations.vps-73025e99.config.system.build.toplevel.drvPath
+nix build .#nixosConfigurations.vps-73025e99.config.system.build.toplevel
+deploy .#vps-73025e99
+```
+
+The host’s filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix` and `hosts/vps-73025e99/hardware.nix`. Keep those values aligned with each machine’s hardware configuration.
 
 ## Network printer discovery
 
@@ -1228,6 +1236,85 @@ dx serve --platform android
 ```
 
 The first rebuild is large because Android Studio, the SDK, NDK, emulator, system image, WebKitGTK, Binaryen, and five Rust target libraries enter the system closure. Subsequent builds reuse the Nix store.
+
+## Remote VPS server (`vps-73025e99`)
+
+The repository defines the remote cloud host `vps-73025e99` (`vps-73025e99.vps.ovh.ca`), an OVH Cloud VPS instance running NixOS 26.05 (Yarara) on Linux 6.18. It serves the Hodari Accounting web application over HTTPS at `https://accounting.hodari.ca`.
+
+### Disk layout and declarative partitioning (Disko)
+
+Storage on `/dev/sda` is managed declaratively via [Disko](https://github.com/nix-community/disko) (`hosts/vps-73025e99/disko.nix`):
+
+| Partition | Type | Size | Mount / Flags | Purpose |
+|---|---|---|---|---|
+| `boot` | `EF02` | 1 MiB | Priority 1 | BIOS Boot Partition for legacy MBR booting on a GPT table |
+| `ESP` | `EF00` | 1 GiB | `/boot` (`vfat`, `umask=0077`) | EFI System Partition for UEFI booting |
+| `swap` | `swap` | 4 GiB | `discardPolicy = "both"` | Swap partition with TRIM enabled |
+| `root` | Linux filesystem | 100% | `/` (`ext4`) | NixOS root filesystem |
+
+### Bootloader: Hybrid UEFI and BIOS GRUB
+
+To accommodate virtualization across cloud VPS providers, `hosts/vps-73025e99/default.nix` configures a hybrid bootloader using GRUB:
+
+```nix
+boot.loader.systemd-boot.enable = false;
+boot.loader.efi.canTouchEfiVariables = false;
+boot.loader.grub = {
+  enable = true;
+  efiSupport = true;
+  efiInstallAsRemovable = true;
+  device = "/dev/sda";
+};
+```
+
+`canTouchEfiVariables = false` prevents attempts to modify non-volatile EFI variables, which virtualized VPS firmware frequently disallows. `efiInstallAsRemovable = true` installs GRUB to `/boot/EFI/BOOT/BOOTX64.EFI`, allowing firmware autodiscovery without NVRAM entries, while `device = "/dev/sda"` writes MBR code to the disk's first sector paired with the 1MB `EF02` BIOS boot partition.
+
+### Secret management and GitLab deploy key (SOPS-Nix)
+
+Secrets are decrypted using [sops-nix](https://github.com/Mic92/sops-nix) with the host's existing SSH Ed25519 host key (`/etc/ssh/ssh_host_ed25519_key`) as the age recipient:
+
+- Decrypts `${inputs.secrets}/hosts/vps-73025e99/secrets.yaml`.
+- Materializes the GitLab deploy key to `/home/smunix/.ssh/id_gitlab_deploy` with permissions `0400` owned by `smunix`.
+- Configures OpenSSH client options so `git` commands accessing `gitlab.com` automatically use this key.
+
+### Services: Hodari Accounting and Caddy Ingress
+
+1. **Hodari Accounting Server (`modules.services.hodari-accounting`)**:
+   - Packaged from `inputs.hodari-accounting` (`git+ssh://git@gitlab.com/hodari-smunix/hodari-accounting.git`).
+   - Runs as a hardened systemd unit: `DynamicUser = true`, `ProtectSystem = "strict"`, `ProtectHome = true`, `PrivateTmp = true`, `NoNewPrivileges = true`, and `RestrictRealtime = true`.
+   - Listens on loopback port `127.0.0.1:8080`. The firewall port remains closed (`openFirewall = false`).
+
+2. **Caddy Reverse Proxy (`services.caddy`)**:
+   - Terminates public HTTP (port 80) and HTTPS (port 443) traffic with automatic Let's Encrypt certificates.
+   - Proxies `accounting.hodari.ca` to `127.0.0.1:8080` with zstd/gzip compression, HSTS, `nosniff`, and `SAMEORIGIN` headers.
+   - Permanently redirects all requests from the VPS host domain `vps-73025e99.vps.ovh.ca` to `https://accounting.hodari.ca{uri}`.
+
+### Dynamic Login Banner (`modules.services.motd`)
+
+Interactive SSH logins display a dynamic, high-performance system dashboard generated with `pkgs.rust-motd`:
+
+- **Banner Information**: NixOS release, kernel version, NixOS manual link, system generation, uptime, 1/5/15-minute load averages, root filesystem usage bar, memory & swap gauges, public IPv4 and global IPv6 on `ens3`, and live statuses of `caddy` and `hodari-accounting`.
+- **Interactive Guard**: Executed through `environment.interactiveShellInit` with `[ -n "$SSH_CONNECTION" ] && [ -t 1 ] && [ -z "$_MOTD_SHOWN" ]` so that non-interactive remote commands (`nix copy`, `scp`, `rsync`, batch scripts) remain unpolluted, and nested shells or `tmux` sessions avoid duplicate banners.
+- **Latency**: Benchmarked at under 70 milliseconds on the VPS.
+
+### Remote deployment
+
+Deploy updates to the VPS using `deploy-rs`:
+
+```sh
+deploy .#vps-73025e99
+```
+
+Or via direct Nix closure copy and activation:
+
+```sh
+nix build .#nixosConfigurations.vps-73025e99.config.system.build.toplevel -o result-vps
+nix copy --to ssh://vps-73025e99.vps.ovh.ca ./result-vps
+ssh vps-73025e99.vps.ovh.ca "sudo ./result-vps/bin/switch-to-configuration switch"
+rm -f ./result-vps
+```
+
+
 
 [11]: https://aya-rs.dev/book/start/development.html "Aya development environment"
 [12]: https://nixos.org/manual/nixos/stable/#sec-qemu-vm "NixOS QEMU virtual machines"

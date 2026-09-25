@@ -126,13 +126,13 @@
       reverse_proxy ${caddyBackendAddress}:${toString cfg.developmentServer.port}
 
       ${lib.optionalString caddyCfg.securityHeaders ''
-        header {
-          Strict-Transport-Security "max-age=31536000; includeSubDomains"
-          X-Content-Type-Options "nosniff"
-          X-Frame-Options "DENY"
-          Referrer-Policy "strict-origin-when-cross-origin"
-        }
-      ''}
+      header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+      }
+    ''}
       ${lib.optionalString caddyCfg.compression "encode zstd gzip"}
       ${caddyCfg.extraConfig}
     }
@@ -520,14 +520,15 @@ in {
         dioxusServeLan
       ];
       networking.firewall.allowedTCPPorts = lib.optional cfg.developmentServer.openFirewall cfg.developmentServer.port;
-      environment.variables = {
-        DIOXUS_DEVSERVER_ADDR = cfg.developmentServer.address;
-        DIOXUS_DEVSERVER_PORT = toString cfg.developmentServer.port;
-      }
-      // lib.optionalAttrs caddyCfg.enable {
-        DIOXUS_CADDY_CONFIG = caddyConfig;
-        DIOXUS_CADDY_INTERFACE = caddyNetworkInterface;
-      };
+      environment.variables =
+        {
+          DIOXUS_DEVSERVER_ADDR = cfg.developmentServer.address;
+          DIOXUS_DEVSERVER_PORT = toString cfg.developmentServer.port;
+        }
+        // lib.optionalAttrs caddyCfg.enable {
+          DIOXUS_CADDY_CONFIG = caddyConfig;
+          DIOXUS_CADDY_INTERFACE = caddyNetworkInterface;
+        };
     })
 
     (lib.mkIf (cfg.developmentServer.enable && caddyCfg.enable) {

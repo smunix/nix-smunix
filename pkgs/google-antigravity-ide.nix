@@ -125,12 +125,12 @@ in
         "$out/share/icons/hicolor/512x512/apps/antigravity-ide.png"
 
       makeWrapper "$libexec/antigravity-ide" "$out/bin/antigravity-ide" \
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ libGL ]}" \
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [libGL]}" \
         --set ELECTRON_OZONE_PLATFORM_HINT auto
 
       # Short alias consistent with the agy CLI naming convention.
       makeWrapper "$libexec/antigravity-ide" "$out/bin/agy-ide" \
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ libGL ]}" \
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [libGL]}" \
         --set ELECTRON_OZONE_PLATFORM_HINT auto
 
       mkdir -p "$out/share/applications"

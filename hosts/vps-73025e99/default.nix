@@ -19,10 +19,12 @@
     useDHCP = lib.mkDefault true;
     interfaces.ens3 = {
       useDHCP = lib.mkDefault true;
-      ipv6.addresses = [{
-        address = "2607:5300:205:200::bc53";
-        prefixLength = 64;
-      }];
+      ipv6.addresses = [
+        {
+          address = "2607:5300:205:200::bc53";
+          prefixLength = 64;
+        }
+      ];
     };
     defaultGateway6 = {
       address = "2607:5300:205:200::1";

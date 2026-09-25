@@ -13,7 +13,11 @@
   '';
 
   netScript = pkgs.writeShellScript "motd-network" ''
-    iface="${if cfg.networkInterface != null then cfg.networkInterface else ""}"
+    iface="${
+      if cfg.networkInterface != null
+      then cfg.networkInterface
+      else ""
+    }"
     if [ -n "$iface" ]; then
       ipv4="$(ip -4 addr show "$iface" 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1)"
       ipv6="$(ip -6 addr show "$iface" scope global 2>/dev/null | awk '/inet6 / {print $2}' | cut -d/ -f1 | head -n1)"
@@ -30,7 +34,8 @@
   serviceEntries = lib.concatStringsSep "\n" (
     lib.mapAttrsToList (displayName: unit: ''
       service display-name="${displayName}" unit="${unit}"
-    '') cfg.services
+    '')
+    cfg.services
   );
 
   serviceBlock = lib.optionalString (cfg.services != {}) ''
@@ -42,7 +47,8 @@
   fsEntries = lib.concatStringsSep "\n" (
     lib.mapAttrsToList (name: mount: ''
       filesystem name="${name}" mount-point="${mount}"
-    '') cfg.filesystems
+    '')
+    cfg.filesystems
   );
 
   fsBlock = lib.optionalString (cfg.filesystems != {}) ''
@@ -62,8 +68,8 @@
       ${fsBlock}
       memory swap-pos="beside"
       ${lib.optionalString (cfg.networkInterface != null) ''
-        command "${netScript}"
-      ''}
+      command "${netScript}"
+    ''}
       ${serviceBlock}
     }
   '';
