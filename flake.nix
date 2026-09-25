@@ -37,6 +37,25 @@
     };
 
     nix-colors.url = "github:misterio77/nix-colors";
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    hodari-accounting = {
+      url = "git+ssh://git@gitlab.com/hodari-smunix/hodari-accounting.git";
+    };
   };
 
   outputs = inputs @ {

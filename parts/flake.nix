@@ -26,5 +26,14 @@ in {
     homeManagerModules = homeModules;
 
     nixosConfigurations = projectLib.mapHosts ../hosts {};
+
+    deploy.nodes.vps-73025e99 = {
+      hostname = "vps-73025e99.vps.ovh.ca";
+      profiles.system = {
+        user = "root";
+        sshUser = "smunix";
+        path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos inputs.self.nixosConfigurations.vps-73025e99;
+      };
+    };
   };
 }
