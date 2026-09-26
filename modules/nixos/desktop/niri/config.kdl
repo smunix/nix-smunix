@@ -100,7 +100,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"(?i)^(dev\.zed\.Zed|zed|zeditor)$"#
+    match app-id=r#"(?i)^(dev\.zed\.Zed|zed|zeditor|antigravity|antigravity-ide)$"#
     open-maximized false
     default-column-width { proportion 0.666667; }
     open-on-workspace "programming"

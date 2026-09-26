@@ -23,6 +23,8 @@ pkgs: let
   # parts/per-system.nix instead; each package may validate its platform when used.
 in {
   rust-toolchain-smunix = rustDeveloperToolchain;
+  google-antigravity = pkgs.callPackage ./google-antigravity.nix {};
+  google-antigravity-hub = pkgs.callPackage ./google-antigravity.nix {};
   google-antigravity-cli = pkgs.callPackage ./google-antigravity-cli.nix {};
   google-antigravity-ide = pkgs.callPackage ./google-antigravity-ide.nix {};
   aya-tool = pkgs.callPackage ./aya-tool.nix {

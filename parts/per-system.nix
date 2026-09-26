@@ -23,9 +23,18 @@
       else null;
   in {
     packages =
-      (builtins.removeAttrs customPackages ["google-antigravity-cli"])
+      (builtins.removeAttrs customPackages [
+        "google-antigravity"
+        "google-antigravity-hub"
+        "google-antigravity-cli"
+      ])
       // inputs.nixpkgs.lib.optionalAttrs antigravitySupported {
-        inherit (customPackages) google-antigravity-cli;
+        inherit
+          (customPackages)
+          google-antigravity
+          google-antigravity-hub
+          google-antigravity-cli
+          ;
       }
       // inputs.nixpkgs.lib.optionalAttrs (ayaVmPackages != null) {
         aya-ebpf-vm = ayaVmPackages.vm;

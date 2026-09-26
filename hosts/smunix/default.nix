@@ -18,6 +18,7 @@
       clients = [
         "kimi"
         "antigravity"
+        "antigravity-hub"
       ];
     };
 

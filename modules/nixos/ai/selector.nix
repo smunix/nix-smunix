@@ -8,6 +8,7 @@
   cfg = config.modules.ai;
   clients = {
     antigravity = pkgs.google-antigravity-cli;
+    antigravity-hub = pkgs.google-antigravity;
     kimi = pkgs.kimi-code;
   };
   selectedClients =

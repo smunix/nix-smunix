@@ -335,7 +335,7 @@ Niri uses resolution-independent widescreen column proportions. Shell, viewer, a
 | `Super+1` | `shell` | WezTerm, Ghostty, XTerm |
 | `Super+2` | `internet` | Firefox, Brave |
 | `Super+3` | `viewers` | Okular, Evince, Zathura, MPV, Xpdf; TDF runs inside the terminal |
-| `Super+4` | `programming` | Zed (`zeditor`), Antigravity IDE (`agy-ide`) |
+| `Super+4` | `programming` | Zed (`zeditor`), Antigravity IDE (`agy-ide`), Antigravity 2.0 Hub (`antigravity`) |
 | `Super+5` | `explorers` | Dolphin |
 | `Super+6` | `chats` | Discord, Signal Desktop, Zoom |
 | `Super+7` | `dumpster` | Any normal application not matched by a more specific rule |
