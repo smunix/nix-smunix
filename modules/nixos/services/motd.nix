@@ -85,7 +85,7 @@
     else "($nu.is-interactive) and ($env._MOTD_SHOWN? == null)";
 in {
   options.modules.services.motd = {
-    enable = lib.mkEnableOption "dynamic system MOTD banner using rust-motd";
+    enable = lib.mkEnableOption "dynamic system MOTD banner using fastfetch and rust-motd";
 
     sshOnly = lib.mkOption {
       type = lib.types.bool;
@@ -119,11 +119,15 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [pkgs.rust-motd];
+    environment.systemPackages = [
+      pkgs.rust-motd
+      pkgs.fastfetch
+    ];
 
     environment.interactiveShellInit = ''
       if ${bashCondition}; then
         export _MOTD_SHOWN=1
+        ${pkgs.fastfetch}/bin/fastfetch
         ${pkgs.rust-motd}/bin/rust-motd ${motdConfig}
       fi
     '';
@@ -131,6 +135,7 @@ in {
     hm.programs.nushell.extraConfig = lib.mkIf (config.modules.shell.default or null == "nushell") ''
       if ${nuCondition} {
         $env._MOTD_SHOWN = "1"
+        ^${pkgs.fastfetch}/bin/fastfetch
         ^${pkgs.rust-motd}/bin/rust-motd ${motdConfig}
       }
     '';

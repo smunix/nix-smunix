@@ -22,6 +22,9 @@ in {
 
       programs.nushell = {
         enable = true;
+        settings = {
+          show_banner = false;
+        };
         environmentVariables = {
           SHELL = "${pkgs.nushell}/bin/nu";
           EDITOR = "hx";
