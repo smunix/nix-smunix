@@ -237,7 +237,7 @@
       };
       fonts.compact = {
         enable = true;
-        reduction = 25;
+        reduction = 35;
       };
       viewers = {
         mpv.enable = true;
