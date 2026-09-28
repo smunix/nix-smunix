@@ -292,6 +292,13 @@
     };
   };
 
+  nix.gc = {
+    automatic = true;
+    dates = "monthly";
+    options = "--delete-older-than 28d";
+    persistent = true;
+  };
+
   hm.modules = {
     base.enable = true;
     packages.enable = true;
