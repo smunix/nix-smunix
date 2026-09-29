@@ -19,9 +19,6 @@ in {
         gutters = ["diff" "diagnostics" "line-numbers" "spacer"];
         text-width = 100;
         rulers = [100];
-        indicators = {
-          rulers = true;
-        };
         lsp = {
           auto-signature-help = true;
           display-inlay-hints = true;
