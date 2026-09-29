@@ -15,6 +15,7 @@ in {
       settings.editor = {
         auto-format = true;
         line-number = "relative";
+        cursorline = true;
         mouse = true;
         gutters = ["diff" "diagnostics" "line-numbers" "spacer"];
         text-width = 100;
