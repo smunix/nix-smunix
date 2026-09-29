@@ -16,8 +16,28 @@ in {
         auto-format = true;
         line-number = "relative";
         mouse = true;
+        gutters = ["diff" "diagnostics" "line-numbers" "spacer"];
+        text-width = 100;
+        rulers = [100];
+        indicators = {
+          rulers = true;
+        };
         lsp = {
+          auto-signature-help = true;
           display-inlay-hints = true;
+        };
+      };
+      languages = {
+        language-server.rust-analyzer.config = {
+          check = {
+            command = "clippy";
+          };
+          cargo = {
+            allFeatures = true;
+          };
+          procMacro = {
+            enable = true;
+          };
         };
       };
     };

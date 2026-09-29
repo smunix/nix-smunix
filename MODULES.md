@@ -36,7 +36,7 @@ This document summarizes the reusable modules and composition helpers in this co
 | Zathura | `modules.desktop.viewers.zathura.enable` | Installs Zathura for lightweight graphical PDF and document viewing. |
 | MPV | `modules.desktop.viewers.mpv.enable` | Installs MPV for graphical audio and video playback. |
 | Editor selector | `modules.desktop.editors.default` | Sets `EDITOR` and `VISUAL` to the selected editor in both system and Home Manager session environments. |
-| Helix | `modules.desktop.editors.helix.enable` | Installs and configures Helix, including relative line numbers, automatic formatting, and LSP inlay hints for variable types. |
+| Helix | `modules.desktop.editors.helix.enable` | Installs and configures Helix, including relative line numbers, automatic formatting, visual gutters, 100-column vertical rulers, LSP inlay hints, signature help, and rust-analyzer integration with Clippy on save and macro/feature expansion. |
 | Vim | `modules.desktop.editors.vim.enable` | Installs Vim through Home Manager. |
 | Zed | `modules.desktop.editors.zed.enable` | Installs and configures Zed with Vim mode and Nix language support. |
 | Firefox | `modules.programs.firefox.enable` | Enables Firefox. |
