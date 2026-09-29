@@ -16,6 +16,9 @@ in {
         auto-format = true;
         line-number = "relative";
         mouse = true;
+        lsp = {
+          display-inlay-hints = true;
+        };
       };
     };
   };
