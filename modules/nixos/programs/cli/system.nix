@@ -16,6 +16,9 @@ in {
       btop
       coreutils
       dmidecode
+      file
+      jless
+      jq
       pciutils
     ];
   };

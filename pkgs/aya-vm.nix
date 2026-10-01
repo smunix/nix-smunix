@@ -79,7 +79,10 @@ in {
       bpf-linker-aya
       bpftools
       bpftrace
+      file
       iproute2
+      jless
+      jq
       pahole
       rust-toolchain-smunix
       tcpdump
