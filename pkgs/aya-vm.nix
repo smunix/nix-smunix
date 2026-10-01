@@ -88,6 +88,7 @@ in {
       tcpdump
     ];
     variables = {
+      NIX_CONFIG = "experimental-features = nix-command flakes";
       RUSTC_BOOTSTRAP = "1";
       RUST_SRC_PATH = "${pkgs.rust-toolchain-smunix}/lib/rustlib/src/rust/library";
       SMUNIX_RUST_CHANNEL = rustPolicy.channel;
