@@ -524,10 +524,10 @@
     "secrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1790318375,
-        "narHash": "sha256-oD6nrJANzWPD6vBA5DK8yP/wPaUeRWqS010SosU9cyk=",
+        "lastModified": 1790853766,
+        "narHash": "sha256-xv4Yz66BPyjNAdnk9IicYMdmRMEKvD9Ib7OrcSWpWXU=",
         "ref": "refs/heads/main",
-        "rev": "29f63f9eb82499745f4317a1afbd76f1151361cb",
+        "rev": "47c67d7a97e697eaccb43901c9a6965ebe7034d5",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/smunix/nix-secrets"

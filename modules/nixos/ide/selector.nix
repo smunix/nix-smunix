@@ -7,7 +7,10 @@
   cfg = config.modules.ide;
   ides = {
     antigravity = pkgs.google-antigravity-ide;
-    zed = pkgs.zed-editor;
+    zed =
+      if config.modules.desktop.editors.zed.enable
+      then config.modules.desktop.editors.zed.package
+      else pkgs.zed-editor;
   };
   selectedIdes =
     if cfg.ide != null
