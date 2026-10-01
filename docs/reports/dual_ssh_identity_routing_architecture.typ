@@ -380,7 +380,7 @@ The implementation spans three synchronized declarative components:
 "hm.programs.git = {\n" +
 "  settings = {\n" +
 "    user = { name = config.user.description; email = config.user.email; }; // ❶\n" +
-"    url.\"git@github.com-dama:\".insteadOf = [                              // ❷\n" +
+"    url.\"git@github.com-dama:damabloom/\".insteadOf = [                      // ❷\n" +
 "      \"git@github.com:damabloom/\"\n" +
 "      \"https://github.com/damabloom/\"\n" +
 "    ];\n" +
@@ -521,7 +521,7 @@ We formalize the convergence properties of the dual-identity transport system.
     Let $cal(T) = {"id_ed25519", "id_ed25519_dama"}$ be the set of cryptographic private keys, and $cal(E) = {"Providence.Salumu@smunix.com", "psalumu@damaconstruction.com"}$ be the author emails.
     
     1. *Case 1: Remote URL match ($U in cal(U)_"dama"$)*:
-       The Git configuration engine evaluates `url."git@github.com-dama:".insteadOf = "git@github.com:damabloom/"`. The effective URL maps to `git@github.com-dama:...`. OpenSSH interrogates `Host github.com-dama`, resolving:
+       The Git configuration engine evaluates `url."git@github.com-dama:damabloom/".insteadOf = "git@github.com:damabloom/"`. The effective URL maps to `git@github.com-dama:damabloom/...`. OpenSSH interrogates `Host github.com-dama`, resolving:
        $
          "IdentityFile" = "id_ed25519_dama", quad "IdentitiesOnly" = "yes"
        $

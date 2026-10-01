@@ -26,7 +26,7 @@ in {
           name = config.user.description;
           email = config.user.email;
         };
-        url."git@github.com-dama:".insteadOf = [
+        url."git@github.com-dama:damabloom/".insteadOf = [
           "git@github.com:damabloom/"
           "https://github.com/damabloom/"
         ];
