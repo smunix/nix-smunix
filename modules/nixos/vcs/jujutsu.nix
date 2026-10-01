@@ -30,6 +30,18 @@ in {
           name = config.user.description;
           email = config.user.email;
         };
+        "--scope" = [
+          {
+            "--when".repositories = [
+              "~/Projects/dama"
+              "~/Projects/work"
+            ];
+            user = {
+              name = config.user.description;
+              email = "psalumu@damaconstruction.com";
+            };
+          }
+        ];
       };
     };
   };

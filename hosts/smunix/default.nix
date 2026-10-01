@@ -165,6 +165,7 @@
       git.enable = true;
       jujutsu.enable = true;
       forges.enable = true;
+      ssh.enable = true;
     };
 
     desktop = {
