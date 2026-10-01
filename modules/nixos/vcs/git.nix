@@ -27,8 +27,8 @@ in {
           email = config.user.email;
         };
         url."git@github.com-dama:".insteadOf = [
-          "git@github.com:damaconstruction/"
-          "https://github.com/damaconstruction/"
+          "git@github.com:damabloom/"
+          "https://github.com/damabloom/"
         ];
       };
       includes = [

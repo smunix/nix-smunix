@@ -293,7 +293,7 @@ We deconstruct the identity and transport boundaries active on `hosts/smunix` in
     (
       [Transparent Rewriting],
       [Git URL `insteadOf`],
-      [`git@github.com:damaconstruction/*` mapped to `github.com-dama`]
+      [`git@github.com:damabloom/*` mapped to `github.com-dama`]
     ),
     (
       [Directory Scoping],
@@ -381,8 +381,8 @@ The implementation spans three synchronized declarative components:
 "  settings = {\n" +
 "    user = { name = config.user.description; email = config.user.email; }; // ❶\n" +
 "    url.\"git@github.com-dama:\".insteadOf = [                              // ❷\n" +
-"      \"git@github.com:damaconstruction/\"\n" +
-"      \"https://github.com/damaconstruction/\"\n" +
+"      \"git@github.com:damabloom/\"\n" +
+"      \"https://github.com/damabloom/\"\n" +
 "    ];\n" +
 "  };\n" +
 "  includes = [{\n" +
@@ -398,7 +398,7 @@ The implementation spans three synchronized declarative components:
 
 #code-callouts(
   1, [Establishes the personal identity (`Providence.Salumu@smunix.com`) as the global baseline for all unstructured repositories.],
-  2, [Transparently intercepts any clone, fetch, or push directed at the `damaconstruction` GitHub organization and rewrites the remote host to `github.com-dama`.],
+  2, [Transparently intercepts any clone, fetch, or push directed at the `damabloom` GitHub organization and rewrites the remote host to `github.com-dama`.],
   3, [Applies conditional directory scoping via Git's `includeIf`: any repository initialized under `~/Projects/dama/` automatically overrides both the commit author email and the transport command.]
 )
 
@@ -516,12 +516,12 @@ We formalize the convergence properties of the dual-identity transport system.
 
 #proof-box(
   "Theorem 1 (Identity Separation Invariance)",
-  "Let R be an arbitrary repository with remote URL U. For all operations op in {clone, fetch, push}, if U contains 'damaconstruction' or the working directory satisfies path in ~/Projects/dama/, the authenticating key is strictly id_ed25519_dama and the author email is psalumu@damaconstruction.com.",
+  "Let R be an arbitrary repository with remote URL U. For all operations op in {clone, fetch, push}, if U contains 'damabloom' or the working directory satisfies path in ~/Projects/dama/, the authenticating key is strictly id_ed25519_dama and the author email is psalumu@damaconstruction.com.",
   [
     Let $cal(T) = {"id_ed25519", "id_ed25519_dama"}$ be the set of cryptographic private keys, and $cal(E) = {"Providence.Salumu@smunix.com", "psalumu@damaconstruction.com"}$ be the author emails.
     
     1. *Case 1: Remote URL match ($U in cal(U)_"dama"$)*:
-       The Git configuration engine evaluates `url."git@github.com-dama:".insteadOf = "git@github.com:damaconstruction/"`. The effective URL maps to `git@github.com-dama:...`. OpenSSH interrogates `Host github.com-dama`, resolving:
+       The Git configuration engine evaluates `url."git@github.com-dama:".insteadOf = "git@github.com:damabloom/"`. The effective URL maps to `git@github.com-dama:...`. OpenSSH interrogates `Host github.com-dama`, resolving:
        $
          "IdentityFile" = "id_ed25519_dama", quad "IdentitiesOnly" = "yes"
        $
@@ -557,7 +557,7 @@ Verification was conducted across all transport, evaluation, and encryption vect
     ),
     (
       [Git URL Rewrite],
-      [`insteadOf damaconstruction`],
+      [`insteadOf damabloom`],
       [Translates remote URLs to work host alias],
       [PASSED]
     ),
