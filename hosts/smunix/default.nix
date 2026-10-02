@@ -186,26 +186,26 @@
           primaryOutput = "eDP-1";
           monitors = [
             {
-              connector = "DP-5";
-              mode = "1920x1080@60.000";
-              scale = 1;
-              transform = "normal";
-              position = {
-                x = 0;
-                y = 0;
-              };
-              workspaces = ["chats" "explorers"];
-            }
-            {
               connector = "eDP-1";
               mode = "3840x2400@59.994";
               scale = 2;
               transform = "normal";
               position = {
-                x = 1920;
+                x = 0;
                 y = 0;
               };
               workspaces = ["shell" "dumpster"];
+            }
+            {
+              connector = "DP-5";
+              mode = "1920x1080@60.000";
+              scale = 1;
+              transform = "normal";
+              position = {
+                x = 1920;
+                y = 0;
+              };
+              workspaces = ["chats" "explorers"];
             }
             {
               connector = "DP-7";

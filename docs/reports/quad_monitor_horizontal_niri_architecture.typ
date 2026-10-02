@@ -267,20 +267,20 @@ We deconstruct the hardware parameters and logical dimensions of the four active
     ("Connector", "Physical Hardware", "Native Mode", "Scale", "Transform", "Logical Geometry (WxH+X+Y)"),
     (55pt, 85pt, 75pt, 30pt, 45pt, 70pt),
     (
-      [`DP-5`],
-      [HP 527sh (3CM41906SW)],
-      [`1920x1080@60`],
-      [`1.0`],
-      [`normal`],
-      [`1920x1080 +0 +0`]
-    ),
-    (
       [`eDP-1`],
       [Sharp Corp (0x1516)],
       [`3840x2400@60`],
       [`2.0`],
       [`normal`],
-      [`1920x1200 +1920 +0`]
+      [`1920x1200 +0 +0`]
+    ),
+    (
+      [`DP-5`],
+      [HP 527sh (3CM41906SW)],
+      [`1920x1080@60`],
+      [`1.0`],
+      [`normal`],
+      [`1920x1080 +1920 +0`]
     ),
     (
       [`DP-7`],
@@ -313,18 +313,18 @@ We formalize the mathematical properties guaranteeing zero gap, zero overlap, an
 
 #proof-box(
   "Theorem 1 (Horizontal Desktop Contiguity & Isomorphism)",
-  "Let D = (D_0, D_1, D_2, D_3) be the ordered sequence of physical displays (DP-5, eDP-1, DP-7, DP-6). The compositor viewport forms a continuous, non-overlapping horizontal manifold spanning exactly 7680 logical pixels.",
+  "Let D = (D_0, D_1, D_2, D_3) be the ordered sequence of physical displays (eDP-1, DP-5, DP-7, DP-6). The compositor viewport forms a continuous, non-overlapping horizontal manifold spanning exactly 7680 logical pixels.",
   [
     Let each display $D_i$ have physical width $W_i$, height $H_i$, scale $s_i$, and transform $"normal"$.
     
     1. *Logical Width Equivalence*:
        $
-         w_0 = 1920 / 1 = 1920, quad
-         w_1 = 3840 / 2 = 1920, quad
+         w_0 = 3840 / 2 = 1920, quad
+         w_1 = 1920 / 1 = 1920, quad
          w_2 = 1920 / 1 = 1920, quad
          w_3 = 1920 / 1 = 1920
        $
-       Remarkably, despite heterogeneous hardware (three 27\" Full HD panels and one 16\" 4K+ laptop panel), the logical width of every display is identical: $w_i = 1920$ for all $i in {0, 1, 2, 3}$.
+       Remarkably, despite heterogeneous hardware (one 16\" 4K+ laptop panel and three 27\" Full HD panels), the logical width of every display is identical: $w_i = 1920$ for all $i in {0, 1, 2, 3}$.
        
     2. *Recurrence Relation for X-Coordinates*:
        Define $x_0 = 0$ and $x_{i+1} = x_i + w_i$. Evaluating recursively:
@@ -367,23 +367,6 @@ The spatial and ergonomic organization of the four displays is rendered in @fig:
         // Card 1
         block(
           width: 100%,
-          fill: rgb("#f0fdf4"),
-          stroke: 1pt + rgb("#16a34a"),
-          radius: 3pt,
-          inset: 6pt,
-          [
-            #text(font: "Ubuntu", size: 7.5pt, weight: "bold", fill: rgb("#166534"))[DP-5 (External 1)] \
-            #text(font: "Ubuntu", size: 6.5pt, fill: rgb("#374151"))[HP 527sh (27\")] \
-            #line(length: 100%, stroke: 0.4pt + rgb("#bbf7d0"))
-            #text(font: "Ubuntu Mono", size: 6.2pt)[1920x1080 \@1x] \
-            #text(font: "Ubuntu Mono", size: 6.2pt)[pos: x=0, y=0] \
-            #v(2pt)
-            #badge[chats, explorers]
-          ]
-        ),
-        // Card 2
-        block(
-          width: 100%,
           fill: rgb("#eff6ff"),
           stroke: 1.2pt + rgb("#2563eb"),
           radius: 3pt,
@@ -393,9 +376,26 @@ The spatial and ergonomic organization of the four displays is rendered in @fig:
             #text(font: "Ubuntu", size: 6.5pt, fill: rgb("#374151"))[Sharp 4K+ (16\")] \
             #line(length: 100%, stroke: 0.4pt + rgb("#bfdbfe"))
             #text(font: "Ubuntu Mono", size: 6.2pt)[3840x2400 \@2x] \
-            #text(font: "Ubuntu Mono", size: 6.2pt)[pos: x=1920, y=0] \
+            #text(font: "Ubuntu Mono", size: 6.2pt)[pos: x=0, y=0] \
             #v(2pt)
             #badge[shell, dumpster]
+          ]
+        ),
+        // Card 2
+        block(
+          width: 100%,
+          fill: rgb("#f0fdf4"),
+          stroke: 1pt + rgb("#16a34a"),
+          radius: 3pt,
+          inset: 6pt,
+          [
+            #text(font: "Ubuntu", size: 7.5pt, weight: "bold", fill: rgb("#166534"))[DP-5 (External 1)] \
+            #text(font: "Ubuntu", size: 6.5pt, fill: rgb("#374151"))[HP 527sh (27\")] \
+            #line(length: 100%, stroke: 0.4pt + rgb("#bbf7d0"))
+            #text(font: "Ubuntu Mono", size: 6.2pt)[1920x1080 \@1x] \
+            #text(font: "Ubuntu Mono", size: 6.2pt)[pos: x=1920, y=0] \
+            #v(2pt)
+            #badge[chats, explorers]
           ]
         ),
         // Card 3
@@ -449,23 +449,23 @@ The previous implementation in `modules/nixos/desktop/niri.nix` was restricted t
 "  primaryOutput = \"eDP-1\";                                               // ❶\n" +
 "  monitors = [\n" +
 "    {\n" +
-"      connector = \"DP-5\"; mode = \"1920x1080@60.000\"; scale = 1;\n" +
-"      transform = \"normal\"; position = { x = 0; y = 0; };                // ❷\n" +
-"      workspaces = [ \"chats\" \"explorers\" ];\n" +
-"    }\n" +
-"    {\n" +
 "      connector = \"eDP-1\"; mode = \"3840x2400@59.994\"; scale = 2;\n" +
-"      transform = \"normal\"; position = { x = 1920; y = 0; };             // ❸\n" +
+"      transform = \"normal\"; position = { x = 0; y = 0; };                 // ❷\n" +
 "      workspaces = [ \"shell\" \"dumpster\" ];\n" +
 "    }\n" +
 "    {\n" +
+"      connector = \"DP-5\"; mode = \"1920x1080@60.000\"; scale = 1;\n" +
+"      transform = \"normal\"; position = { x = 1920; y = 0; };              // ❸\n" +
+"      workspaces = [ \"chats\" \"explorers\" ];\n" +
+"    }\n" +
+"    {\n" +
 "      connector = \"DP-7\"; mode = \"1920x1080@60.000\"; scale = 1;\n" +
-"      transform = \"normal\"; position = { x = 3840; y = 0; };             // ❹\n" +
+"      transform = \"normal\"; position = { x = 3840; y = 0; };              // ❹\n" +
 "      workspaces = [ \"programming\" ];\n" +
 "    }\n" +
 "    {\n" +
 "      connector = \"DP-6\"; mode = \"1920x1080@60.000\"; scale = 1;\n" +
-"      transform = \"normal\"; position = { x = 5760; y = 0; };             // ❺\n" +
+"      transform = \"normal\"; position = { x = 5760; y = 0; };              // ❺\n" +
 "      workspaces = [ \"internet\" \"viewers\" ];\n" +
 "    }\n" +
 "  ];\n" +
@@ -475,8 +475,8 @@ The previous implementation in `modules/nixos/desktop/niri.nix` was restricted t
 
 #code-callouts(
   1, [Establishes the built-in laptop panel (`eDP-1`) as the primary output, guaranteeing that any unmatched or orphaned workspaces open gracefully on the local screen if external displays are disconnected.],
-  2, [Assigns leftmost display `DP-5` (HP 527sh) to communication and navigation (`chats`, `explorers`) at horizontal orientation ($x = 0$).],
-  3, [Configures center-left built-in display `eDP-1` at $2times$ integer scaling ($x = 1920$), routing terminal and system fallbacks (`shell`, `dumpster`).],
+  2, [Assigns the leftmost built-in laptop panel (`eDP-1`) at $2times$ integer scaling ($x = 0$), routing terminal and system fallbacks (`shell`, `dumpster`).],
+  3, [Configures center-left external display `DP-5` (HP 527sh) at $x = 1920$ for communication and file navigation (`chats`, `explorers`).],
   4, [Configures center-right display `DP-7` directly in the developer's primary gaze field for development (`programming`, e.g., Zed, Antigravity IDE).],
   5, [Configures rightmost display `DP-6` for documentation, research, and media consumption (`internet`, `viewers`).]
 )
