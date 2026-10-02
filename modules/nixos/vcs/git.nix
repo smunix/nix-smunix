@@ -34,6 +34,10 @@ in {
           "git@github.com:psalumu-dama/"
           "https://github.com/psalumu-dama/"
         ];
+        url."git@gitlab.com-dama:damacs1/".insteadOf = [
+          "git@gitlab.com:damacs1/"
+          "https://gitlab.com/damacs1/"
+        ];
       };
       includes = [
         {
@@ -50,6 +54,10 @@ in {
               "git@github.com:"
               "https://github.com/"
             ];
+            url."git@gitlab.com-dama:".insteadOf = [
+              "git@gitlab.com:"
+              "https://gitlab.com/"
+            ];
           };
         }
         {
@@ -65,6 +73,10 @@ in {
             url."git@github.com-dama:".insteadOf = [
               "git@github.com:"
               "https://github.com/"
+            ];
+            url."git@gitlab.com-dama:".insteadOf = [
+              "git@gitlab.com:"
+              "https://gitlab.com/"
             ];
           };
         }

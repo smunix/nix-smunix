@@ -361,6 +361,16 @@ The implementation spans three synchronized declarative components:
 "          IdentityFile = cfg.personalKeyPath;   // ❸\n" +
 "          IdentitiesOnly = \"yes\";\n" +
 "        };\n" +
+"        \"gitlab.com-dama\" = {\n" +
+"          HostName = \"gitlab.com\"; User = \"git\";\n" +
+"          IdentityFile = cfg.workKeyPath;\n" +
+"          IdentitiesOnly = \"yes\";\n" +
+"        };\n" +
+"        \"gitlab.com\" = {\n" +
+"          HostName = \"gitlab.com\"; User = \"git\";\n" +
+"          IdentityFile = cfg.personalKeyPath;\n" +
+"          IdentitiesOnly = \"yes\";\n" +
+"        };\n" +
 "      };\n" +
 "    };\n" +
 "  };\n" +
@@ -369,9 +379,9 @@ The implementation spans three synchronized declarative components:
 )
 
 #code-callouts(
-  1, [Binds the work SSH alias `github.com-dama` explicitly to the Dama Construction Ed25519 key (`~/.ssh/id_ed25519_dama`).],
-  2, [Enforces `IdentitiesOnly = "yes"`, preventing the GNOME Keyring SSH agent from offering unauthorized personal keys to work repositories.],
-  3, [Binds the canonical `github.com` host entry to the personal workstation key (`~/.ssh/id_ed25519`) as the universal default.]
+  1, [Binds work SSH aliases (`github.com-dama`, `gitlab.com-dama`) explicitly to the Dama Ed25519 key (`~/.ssh/id_ed25519_dama`).],
+  2, [Enforces `IdentitiesOnly = "yes"`, preventing agent key accumulation from offering personal keys to work repositories.],
+  3, [Binds canonical host entries (`github.com`, `gitlab.com`) to the personal key (`~/.ssh/id_ed25519`) as the universal default.]
 )
 
 == 2. Dual Git Authorship & URL Rewriting (`modules/nixos/vcs/git.nix`)
@@ -381,15 +391,19 @@ The implementation spans three synchronized declarative components:
 "  settings = {\n" +
 "    user = { name = config.user.description; email = config.user.email; }; // ❶\n" +
 "    url.\"git@github.com-dama:damabloom/\".insteadOf = [                      // ❷\n" +
-"      \"git@github.com:damabloom/\"\n" +
-"      \"https://github.com/damabloom/\"\n" +
+"      \"git@github.com:damabloom/\" \"https://github.com/damabloom/\"\n" +
+"    ];\n" +
+"    url.\"git@gitlab.com-dama:damacs1/\".insteadOf = [                         // ❸\n" +
+"      \"git@gitlab.com:damacs1/\" \"https://gitlab.com/damacs1/\"\n" +
 "    ];\n" +
 "  };\n" +
 "  includes = [{\n" +
-"    condition = \"gitdir:~/Projects/dama/\";                                // ❸\n" +
+"    condition = \"gitdir:~/Projects/dama/\";                                // ❹\n" +
 "    contents = {\n" +
 "      user.email = \"psalumu@damaconstruction.com\";\n" +
 "      core.sshCommand = \"ssh -i ~/.ssh/id_ed25519_dama -o IdentitiesOnly=yes\";\n" +
+"      url.\"git@github.com-dama:\".insteadOf = [ \"git@github.com:\" ];\n" +
+"      url.\"git@gitlab.com-dama:\".insteadOf = [ \"git@gitlab.com:\" ];\n" +
 "    };\n" +
 "  }];\n" +
 "};",
@@ -397,9 +411,10 @@ The implementation spans three synchronized declarative components:
 )
 
 #code-callouts(
-  1, [Establishes the personal identity (`Providence.Salumu@smunix.com`) as the global baseline for all unstructured repositories.],
-  2, [Transparently intercepts any clone, fetch, or push directed at the `damabloom` GitHub organization and rewrites the remote host to `github.com-dama`.],
-  3, [Applies conditional directory scoping via Git's `includeIf`: any repository initialized under `~/Projects/dama/` automatically overrides both the commit author email and the transport command.]
+  1, [Establishes personal identity (`Providence.Salumu@smunix.com`) as global baseline across GitHub and GitLab.],
+  2, [Transparently intercepts GitHub operations for `damabloom` and rewrites remote host to `github.com-dama`.],
+  3, [Transparently intercepts GitLab operations for `damacs1` and rewrites remote host to `gitlab.com-dama`.],
+  4, [Applies conditional directory scoping: any repo under `~/Projects/dama/` or `~/Projects/work/` rewrites all GitHub and GitLab transports to work host aliases.]
 )
 
 #pagebreak()
@@ -583,6 +598,12 @@ Verification was conducted across all transport, evaluation, and encryption vect
       [Secrets Upstream],
       [`jj git push --remote gh`],
       [Pushed rev `4f3f7e39` to `smunix/nix-secrets`],
+      [PASSED]
+    ),
+    (
+      [GitLab Work Auth],
+      [`git@gitlab.com:damacs1/docs.git`],
+      [Authenticates as `@psalumu-dama` via `gitlab.com-dama`],
       [PASSED]
     )
   )

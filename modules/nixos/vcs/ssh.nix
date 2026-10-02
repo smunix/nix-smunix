@@ -43,6 +43,18 @@ in {
           IdentityFile = cfg.personalKeyPath;
           IdentitiesOnly = "yes";
         };
+        "gitlab.com-dama" = {
+          HostName = "gitlab.com";
+          User = "git";
+          IdentityFile = cfg.workKeyPath;
+          IdentitiesOnly = "yes";
+        };
+        "gitlab.com" = {
+          HostName = "gitlab.com";
+          User = "git";
+          IdentityFile = cfg.personalKeyPath;
+          IdentitiesOnly = "yes";
+        };
       };
     };
   };
