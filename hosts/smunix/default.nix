@@ -183,28 +183,53 @@
         packageChannel = "unstable";
         monitorLayout = {
           enable = true;
-          primaryOutput = "external";
-          external = {
-            connector = "DP-5";
-            mode = "2560x1440@59.91";
-            scale = 1;
-            transform = "90";
-            position = {
-              x = 0;
-              y = 0;
-            };
-            fullWidthColumns = true;
-          };
-          internal = {
-            connector = "eDP-1";
-            mode = "3840x2400@59.99";
-            scale = 2;
-            transform = "normal";
-            position = {
-              x = 1440;
-              y = 0;
-            };
-          };
+          primaryOutput = "eDP-1";
+          monitors = [
+            {
+              connector = "DP-5";
+              mode = "1920x1080@60.000";
+              scale = 1;
+              transform = "normal";
+              position = {
+                x = 0;
+                y = 0;
+              };
+              workspaces = ["chats" "explorers"];
+            }
+            {
+              connector = "eDP-1";
+              mode = "3840x2400@59.994";
+              scale = 2;
+              transform = "normal";
+              position = {
+                x = 1920;
+                y = 0;
+              };
+              workspaces = ["shell" "dumpster"];
+            }
+            {
+              connector = "DP-7";
+              mode = "1920x1080@60.000";
+              scale = 1;
+              transform = "normal";
+              position = {
+                x = 3840;
+                y = 0;
+              };
+              workspaces = ["programming"];
+            }
+            {
+              connector = "DP-6";
+              mode = "1920x1080@60.000";
+              scale = 1;
+              transform = "normal";
+              position = {
+                x = 5760;
+                y = 0;
+              };
+              workspaces = ["internet" "viewers"];
+            }
+          ];
         };
         gammastep = {
           enable = true;

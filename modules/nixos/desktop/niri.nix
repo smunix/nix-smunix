@@ -35,14 +35,30 @@
   primaryWorkspaceOutput =
     if cfg.monitorLayout.primaryOutput == "external"
     then cfg.monitorLayout.external.connector
-    else cfg.monitorLayout.internal.connector;
+    else if cfg.monitorLayout.primaryOutput == "internal"
+    then cfg.monitorLayout.internal.connector
+    else cfg.monitorLayout.primaryOutput;
+  workspaceOutputMap =
+    if cfg.monitorLayout.monitors != []
+    then
+      lib.listToAttrs (
+        lib.concatMap (
+          m: map (w: lib.nameValuePair w m.connector) m.workspaces
+        ) cfg.monitorLayout.monitors
+      )
+    else {};
   workspaceConfig =
     lib.concatMapStringsSep "\n" (
       name:
         if cfg.monitorLayout.enable
-        then ''
+        then let
+          output =
+            if builtins.hasAttr name workspaceOutputMap
+            then workspaceOutputMap.${name}
+            else primaryWorkspaceOutput;
+        in ''
           workspace "${name}" {
-              open-on-output "${primaryWorkspaceOutput}"
+              open-on-output "${output}"
           }
         ''
         else ''workspace "${name}"''
@@ -51,24 +67,38 @@
   externalLayoutConfig =
     lib.optionalString cfg.monitorLayout.external.fullWidthColumns
     "    layout {\n        default-column-width { proportion 1.0; }\n    }\n";
-  monitorConfig = lib.optionalString cfg.monitorLayout.enable ''
-    // External portrait display on the left.
-    output "${cfg.monitorLayout.external.connector}" {
-        mode "${cfg.monitorLayout.external.mode}"
-        scale ${toString cfg.monitorLayout.external.scale}
-        transform "${cfg.monitorLayout.external.transform}"
-        position x=${toString cfg.monitorLayout.external.position.x} y=${toString cfg.monitorLayout.external.position.y}
+  monitorConfig = lib.optionalString cfg.monitorLayout.enable (
+    if cfg.monitorLayout.monitors != []
+    then
+      lib.concatMapStringsSep "\n\n" (
+        m: ''
+          output "${m.connector}" {
+              ${lib.optionalString (m.mode != null) "mode \"${m.mode}\""}
+              scale ${toString m.scale}
+              transform "${m.transform}"
+              position x=${toString m.position.x} y=${toString m.position.y}
+          ${lib.optionalString m.fullWidthColumns "    layout {\n        default-column-width { proportion 1.0; }\n    }\n"}    }
+        ''
+      ) cfg.monitorLayout.monitors
+    else ''
+      // External portrait display on the left.
+      output "${cfg.monitorLayout.external.connector}" {
+          mode "${cfg.monitorLayout.external.mode}"
+          scale ${toString cfg.monitorLayout.external.scale}
+          transform "${cfg.monitorLayout.external.transform}"
+          position x=${toString cfg.monitorLayout.external.position.x} y=${toString cfg.monitorLayout.external.position.y}
 
-    ${externalLayoutConfig}    }
+      ${externalLayoutConfig}    }
 
-    // Built-in HiDPI panel on the right.
-    output "${cfg.monitorLayout.internal.connector}" {
-        mode "${cfg.monitorLayout.internal.mode}"
-        scale ${toString cfg.monitorLayout.internal.scale}
-        transform "${cfg.monitorLayout.internal.transform}"
-        position x=${toString cfg.monitorLayout.internal.position.x} y=${toString cfg.monitorLayout.internal.position.y}
-    }
-  '';
+      // Built-in HiDPI panel on the right.
+      output "${cfg.monitorLayout.internal.connector}" {
+          mode "${cfg.monitorLayout.internal.mode}"
+          scale ${toString cfg.monitorLayout.internal.scale}
+          transform "${cfg.monitorLayout.internal.transform}"
+          position x=${toString cfg.monitorLayout.internal.position.x} y=${toString cfg.monitorLayout.internal.position.y}
+      }
+    ''
+  );
   niriConfig = pkgs.writeText "niri-config.kdl" ''
     ${monitorConfig}
     ${workspaceConfig}
@@ -138,12 +168,77 @@ in {
       enable = lib.mkEnableOption "the configured external and internal Niri output layout";
 
       primaryOutput = lib.mkOption {
-        type = lib.types.enum [
-          "external"
-          "internal"
-        ];
+        type = lib.types.str;
         default = "internal";
-        description = "Which configured output owns the persistent named workspaces when available.";
+        description = "Which configured output owns persistent named workspaces when available. Accepts connector names (e.g. DP-7, eDP-1) or 'external' / 'internal'.";
+      };
+
+      monitors = lib.mkOption {
+        type = lib.types.listOf (lib.types.submodule {
+          options = {
+            connector = lib.mkOption {
+              type = lib.types.nonEmptyStr;
+              description = "Connector name of the display (e.g. eDP-1, DP-5, DP-6, DP-7).";
+            };
+            mode = lib.mkOption {
+              type = lib.types.nullOr lib.types.nonEmptyStr;
+              default = null;
+              description = "Mode selected for the display (e.g. 1920x1080@60.000).";
+            };
+            scale = lib.mkOption {
+              type = lib.types.numbers.between 0.1 10.0;
+              default = 1.0;
+              description = "Scale factor for the display.";
+            };
+            transform = lib.mkOption {
+              type = lib.types.enum [
+                "normal"
+                "90"
+                "180"
+                "270"
+                "flipped"
+                "flipped-90"
+                "flipped-180"
+                "flipped-270"
+              ];
+              default = "normal";
+              description = "Transform applied to the display.";
+            };
+            position = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  x = lib.mkOption {
+                    type = lib.types.int;
+                    default = 0;
+                    description = "Display X position in logical pixels.";
+                  };
+                  y = lib.mkOption {
+                    type = lib.types.int;
+                    default = 0;
+                    description = "Display Y position in logical pixels.";
+                  };
+                };
+              };
+              default = {
+                x = 0;
+                y = 0;
+              };
+              description = "Display position in logical pixels.";
+            };
+            workspaces = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [];
+              description = "Persistent named workspaces assigned to open on this output.";
+            };
+            fullWidthColumns = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether new columns default to the full output width.";
+            };
+          };
+        });
+        default = [];
+        description = "List of configured monitors. When non-empty, this takes precedence over the legacy external/internal monitor options.";
       };
 
       external = {
@@ -325,8 +420,12 @@ in {
       {
         assertion =
           !cfg.monitorLayout.enable
-          || cfg.monitorLayout.external.connector != cfg.monitorLayout.internal.connector;
-        message = "Niri external and internal outputs must use different connector names.";
+          || (
+            if cfg.monitorLayout.monitors != []
+            then lib.allUnique (map (m: m.connector) cfg.monitorLayout.monitors)
+            else cfg.monitorLayout.external.connector != cfg.monitorLayout.internal.connector
+          );
+        message = "Niri monitorLayout outputs must use distinct connector names.";
       }
       {
         assertion =
