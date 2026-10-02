@@ -35,5 +35,14 @@ in {
         path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos inputs.self.nixosConfigurations.vps-73025e99;
       };
     };
+
+    deploy.nodes.vps-52cead61 = {
+      hostname = "vps-52cead61.vps.ovh.ca";
+      profiles.system = {
+        user = "root";
+        sshUser = "damacs";
+        path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos inputs.self.nixosConfigurations.vps-52cead61;
+      };
+    };
   };
 }

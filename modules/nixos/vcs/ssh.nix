@@ -31,6 +31,16 @@ in {
           User = "smunix";
           IdentityFile = cfg.personalKeyPath;
         };
+        "vps-52cead61" = {
+          HostName = "148.113.254.43";
+          User = "damacs";
+          IdentityFile = cfg.workKeyPath;
+        };
+        "vps-52cead61.vps.ovh.ca" = {
+          HostName = "148.113.254.43";
+          User = "damacs";
+          IdentityFile = cfg.workKeyPath;
+        };
         "github.com-dama" = {
           HostName = "github.com";
           User = "git";
