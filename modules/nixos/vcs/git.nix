@@ -30,6 +30,10 @@ in {
           "git@github.com:damabloom/"
           "https://github.com/damabloom/"
         ];
+        url."git@github.com-dama:psalumu-dama/".insteadOf = [
+          "git@github.com:psalumu-dama/"
+          "https://github.com/psalumu-dama/"
+        ];
       };
       includes = [
         {
@@ -42,6 +46,10 @@ in {
             core = {
               sshCommand = "ssh -i ~/.ssh/id_ed25519_dama -o IdentitiesOnly=yes";
             };
+            url."git@github.com-dama:".insteadOf = [
+              "git@github.com:"
+              "https://github.com/"
+            ];
           };
         }
         {
@@ -54,6 +62,10 @@ in {
             core = {
               sshCommand = "ssh -i ~/.ssh/id_ed25519_dama -o IdentitiesOnly=yes";
             };
+            url."git@github.com-dama:".insteadOf = [
+              "git@github.com:"
+              "https://github.com/"
+            ];
           };
         }
       ];
