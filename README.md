@@ -569,15 +569,21 @@ sudo nixos-rebuild build --flake .#smunix
 sudo nixos-rebuild switch --flake .#smunix
 ```
 
-Evaluate, build, or deploy the remote OVH Cloud VPS (`vps-73025e99`):
+Evaluate, build, or deploy the remote OVH Cloud VPS hosts (`vps-73025e99` and `vps-52cead61`):
 
 ```sh
+# Production application node (vps-73025e99)
 nix eval .#nixosConfigurations.vps-73025e99.config.system.build.toplevel.drvPath
 nix build .#nixosConfigurations.vps-73025e99.config.system.build.toplevel
 deploy .#vps-73025e99
+
+# Dedicated cloud node (vps-52cead61)
+nix eval .#nixosConfigurations.vps-52cead61.config.system.build.toplevel.drvPath
+nix build .#nixosConfigurations.vps-52cead61.config.system.build.toplevel
+deploy .#vps-52cead61
 ```
 
-The host’s filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix` and `hosts/vps-73025e99/hardware.nix`. Keep those values aligned with each machine’s hardware configuration.
+The hosts' filesystem, encryption, swap, and CPU declarations remain isolated in `hosts/smunix/hardware.nix`, `hosts/vps-73025e99/hardware.nix`, and `hosts/vps-52cead61/hardware.nix`. Keep those values aligned with each machine’s hardware configuration.
 
 ## Network printer discovery
 
@@ -1313,6 +1319,39 @@ nix copy --to ssh://vps-73025e99.vps.ovh.ca ./result-vps
 ssh vps-73025e99.vps.ovh.ca "sudo ./result-vps/bin/switch-to-configuration switch"
 rm -f ./result-vps
 ```
+
+## Remote VPS server (`vps-52cead61`)
+
+The repository defines the remote cloud host `vps-52cead61` (`vps-52cead61.vps.ovh.ca`), an isolated OVH Cloud VPS instance running NixOS 26.05 (Yarara) on Linux 7.0 for Dama Construction operations.
+
+### System Architecture & Host Policy
+
+- **Primary User**: `damacs` (`psalumu@damaconstruction.com`) with passwordless sudo (`modules.security.passwordlessSudo.enable = true`).
+- **Network & Firewall**: Bounded to interface `ens3` with dynamic IPv4 (`148.113.254.43`) and static IPv6 (`2607:5300:205:200::882f/64` via default gateway `2607:5300:205:200::1`). Enforces strict ingress security: **only TCP port 22 is permitted** (`networking.firewall.allowedTCPPorts = [22]`; ports 80 and 443 are explicitly closed).
+- **Disk Partitioning & Disko**: Declarative GPT storage on `/dev/sda` (`hosts/vps-52cead61/disko.nix`) featuring:
+  - `boot` (`EF02`): 1 MiB BIOS boot partition for hybrid GRUB MBR.
+  - `ESP` (`EF00`): 1 GiB EFI System Partition mounted at `/boot` (`vfat`, `umask=0077`).
+  - `swap`: 4 GiB swap with `discardPolicy = "both"`.
+  - `root`: 100% ext4 root filesystem mounted at `/`.
+- **Bootloader**: Hybrid UEFI and BIOS GRUB (`boot.loader.grub.efiSupport = true`, `boot.loader.grub.efiInstallAsRemovable = true`, `boot.loader.grub.device = "/dev/sda"`) matching OVH hypervisor requirements.
+- **Secret Management (SOPS-Nix)**: Decrypts `${inputs.secrets}/hosts/vps-52cead61/secrets.yaml` using the host's persistent Ed25519 SSH host key (`/etc/ssh/ssh_host_ed25519_key`) converted to age recipient.
+- **Interactive Telemetry & Administration Tools**: Pre-installed interactive terminal monitors `bottom` (`btm`) and `btop` alongside foundational administration utilities (`curl`, `git`, `htop`, `tmux`, `vim`).
+- **Dynamic MOTD**: System dashboard generated via `rust-motd` displaying live CPU, memory, swap, disk utilization, and network IP telemetry upon interactive login.
+
+### Remote deployment
+
+Deploy updates using `deploy-rs`:
+
+```sh
+deploy .#vps-52cead61
+```
+
+Or via direct NixOS rebuild switch:
+
+```sh
+nixos-rebuild switch --flake .#vps-52cead61 --target-host damacs@vps-52cead61.vps.ovh.ca --sudo
+```
+
 
 
 

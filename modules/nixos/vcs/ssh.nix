@@ -26,6 +26,11 @@ in {
       enable = true;
       enableDefaultConfig = false;
       settings = {
+        "vps-73025e99" = {
+          HostName = "148.113.244.62";
+          User = "smunix";
+          IdentityFile = cfg.personalKeyPath;
+        };
         "vps-73025e99.vps.ovh.ca" = {
           HostName = "148.113.244.62";
           User = "smunix";
