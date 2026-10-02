@@ -101,6 +101,8 @@
 
   # Basic system packages for remote server administration
   environment.systemPackages = with pkgs; [
+    bottom
+    btop
     curl
     git
     htop
