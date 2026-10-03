@@ -27,6 +27,7 @@
         "google-antigravity"
         "google-antigravity-hub"
         "google-antigravity-cli"
+        "google-antigravity-ide"
       ])
       // inputs.nixpkgs.lib.optionalAttrs antigravitySupported {
         inherit
@@ -34,6 +35,7 @@
           google-antigravity
           google-antigravity-hub
           google-antigravity-cli
+          google-antigravity-ide
           ;
       }
       // inputs.nixpkgs.lib.optionalAttrs (ayaVmPackages != null) {

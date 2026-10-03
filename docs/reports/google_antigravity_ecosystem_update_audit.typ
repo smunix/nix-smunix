@@ -519,9 +519,11 @@ Below are the exact declarative modifications required to update the repository 
    ```sh
    sudo nixos-rebuild switch --flake .#smunix
    ```
-4. *Verify Runtime Binaries*:
+4. *Update Subagent Execution Wrapper*:
+   Update `~/.gemini/antigravity-cli/bin/agentapi` to dynamically dispatch via `exec agy agentapi "$@"` rather than hardcoding an ephemeral Nix store path.
+5. *Verify Runtime Binaries*:
    ```sh
-   agy --version        # Must output 1.2.15
+   agy --version        # Outputs 1.2.15
    antigravity --version # Launches Hub 2.19.1
    agy-ide --version    # Retains 2.5.5
    ```

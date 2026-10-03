@@ -43,19 +43,19 @@
 }: let
   availableSources = {
     x86_64-linux = {
-      url = "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.17.0-5217732355031040/linux-x64/Antigravity.tar.gz";
-      hash = "sha512-BullDzad/EMMVVjjc15yOSqTYJ78KZViuXzJoi2ugNuw2EcgyQ9+zQRdLHFQH50I8z7y1F2xPAhX6HeB+Hlbhw==";
+      url = "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.19.1-6046815158665216/linux-x64/Antigravity.tar.gz";
+      hash = "sha512-LgMi1/gHJiazDwnwyQ6W45C6NSRlNzzXNuGks4WJ1v+EMe3p3qs4fzl/KJLYmf1T1/TOkXENr5uOI+dfgYLBDg==";
     };
     aarch64-linux = {
-      url = "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.17.0-5217732355031040/linux-arm/Antigravity.tar.gz";
-      hash = "sha512-nntNg2tGBo08c27kbHkRBVcK3F1iio41EVRL5oug4kEgixh1tnGDhuVuHb0e/BQUcn3LHDfmrTB2iUBaFYIBXg==";
+      url = "https://storage.googleapis.com/antigravity-public/antigravity-hub/2.19.1-6046815158665216/linux-arm/Antigravity.tar.gz";
+      hash = "sha512-F2OTkiZs6NpqKenwrr2VIrXDNaTCkswSB05hspWls687cfm4N4rOjQLK9XWd7+NrO30GDhPjGC5BOJlmfdsZeQ==";
     };
   };
   source = availableSources.${stdenv.hostPlatform.system} or (throw "google-antigravity: unsupported system ${stdenv.hostPlatform.system}");
 in
   stdenv.mkDerivation {
     pname = "google-antigravity";
-    version = "2.17.0";
+    version = "2.19.1";
 
     src = fetchurl {
       inherit (source) url hash;

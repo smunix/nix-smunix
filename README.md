@@ -282,7 +282,7 @@ After routing is ready, the service starts the saved collection, profile, and sc
 
 The AI module provides one host-level switch and a typed `clients` list, so several coding agents can be installed together. The `smunix` host selects both `"kimi"` and `"antigravity"`. Kimi Code remains exposed as `pkgs.kimi-code` by its upstream flake overlay and runs with `kimi`. Its host-specific age payload is decrypted from the private input at user login and atomically installed as `~/.kimi-code/config.toml` with mode `0600`; the plaintext API key never enters the Nix store. The old singular `modules.ai.client` option remains as a deprecated compatibility interface and overrides `clients` when explicitly set.
 
-Google Antigravity CLI is packaged locally as `pkgs.google-antigravity-cli` from Google's official Linux release archive, pinned to version 1.2.6 and verified by the published SHA-512 digest. Run it with:
+Google Antigravity CLI is packaged locally as `pkgs.google-antigravity-cli` from Google's official Linux release archive, pinned to version 1.2.15 and verified by the published SHA-512 digest. Run it with:
 
 ```sh
 agy
