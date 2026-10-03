@@ -545,6 +545,8 @@ These hardware keys continue working while the session is locked.
 | `Ctrl+Print` | Capture the entire screen through Noctalia. |
 | `Alt+Print` | Capture the focused window through Niri. |
 | `Mod+Escape` | Toggle whether the focused application may inhibit compositor shortcuts. |
+| `Mod+Shift+C` | Reload the Niri configuration. |
+| `Mod+Alt+R` | Redraw displays, restore monitor layout, and relocate apps to their assigned workspaces. |
 | `Mod+Q` | Close the focused window. |
 | `Mod+Shift+P` | Turn off the displays. |
 | `Mod+Shift+E` | Exit Niri. |

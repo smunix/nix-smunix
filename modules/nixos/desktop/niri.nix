@@ -148,6 +148,74 @@
     echo "Gammastep: GeoClue location unavailable and no manual fallback is configured." >&2
     exit 1
   '';
+  niriRestoreWorkspaces = pkgs.writeShellScriptBin "niri-restore-workspaces" ''
+    exec ${pkgs.python3}/bin/python3 - << 'EOF' "$@"
+    import json
+    import re
+    import subprocess
+    import sys
+
+    def main():
+        try:
+            windows = json.loads(subprocess.check_output(["${niriPackage}/bin/niri", "msg", "--json", "windows"]))
+            workspaces = json.loads(subprocess.check_output(["${niriPackage}/bin/niri", "msg", "--json", "workspaces"]))
+            outputs_data = json.loads(subprocess.check_output(["${niriPackage}/bin/niri", "msg", "--json", "outputs"]))
+            connected_outputs = list(outputs_data.keys())
+        except Exception as e:
+            print(f"Error querying niri: {e}", file=sys.stderr)
+            return 1
+
+        ws_map = {ws["id"]: ws["name"] for ws in workspaces}
+
+        app_routes = [
+            (r"(?i)^(org\.wezfurlong\.wezterm|wezterm|com\.mitchellh\.ghostty|ghostty|xterm)$", "shell"),
+            (r"(?i)^(firefox|org\.mozilla\.firefox|brave-browser|com\.brave\.browser)$", "internet"),
+            (r"(?i)^(org\.kde\.okular|okular|org\.gnome\.evince|evince|org\.pwmt\.zathura|zathura|io\.mpv\.Mpv|mpv|xpdf)$", "viewers"),
+            (r"(?i)^(dev\.zed\.Zed|zed|zeditor|antigravity|antigravity-ide)$", "programming"),
+            (r"(?i)^(org\.kde\.dolphin|dolphin)$", "explorers"),
+            (r"(?i)^(signal|Signal|slack|Slack|discord|Discord|telegram)$", "chats"),
+        ]
+
+        moved_windows = 0
+        for win in windows:
+            app_id = win.get("app_id") or ""
+            current_ws = ws_map.get(win["workspace_id"])
+            target_ws = "dumpster"
+            for pattern, ws in app_routes:
+                if re.search(pattern, app_id):
+                    target_ws = ws
+                    break
+            if current_ws != target_ws:
+                win_id = win["id"]
+                subprocess.run(
+                    ["${niriPackage}/bin/niri", "msg", "action", "move-window-to-workspace", "--focus", "false", "--window-id", str(win_id), target_ws],
+                    check=False
+                )
+                moved_windows += 1
+
+        workspace_target_output = json.loads('${builtins.toJSON workspaceOutputMap}')
+        if len(connected_outputs) > 1:
+            for ws_name, target_out in workspace_target_output.items():
+                if target_out in connected_outputs:
+                    subprocess.run(
+                        ["${niriPackage}/bin/niri", "msg", "action", "move-workspace-to-monitor", "--reference", ws_name, target_out],
+                        check=False
+                    )
+
+        subprocess.run(["${niriPackage}/bin/niri", "msg", "action", "load-config-file"], check=False)
+
+        msg = f"Reorganized {moved_windows} window(s) across {len(connected_outputs)} display(s)."
+        subprocess.run(
+            ["${pkgs.libnotify}/bin/notify-send", "-a", "Niri", "-i", "video-display", "Display Redrawn", msg],
+            check=False
+        )
+        print(msg)
+        return 0
+
+    if __name__ == "__main__":
+        sys.exit(main())
+    EOF
+  '';
 in {
   imports = [inputs.noctalia.nixosModules.default];
 
@@ -518,6 +586,7 @@ in {
       kdePackages.okular
       libnotify
       networkmanagerapplet
+      niriRestoreWorkspaces
       pavucontrol
       playerctl
       qt6Packages.qt6ct
